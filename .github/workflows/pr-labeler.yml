@@ -35,10 +35,16 @@ jobs:
               labels.push('other');  // Fallback label for any unrecognized branch types
             }
 
-            // Add labels to the pull request
-            github.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: labels
-            });
+            try {
+              // Add labels to the pull request
+              await github.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+              console.log(`Labels added: ${labels.join(', ')}`);
+            } catch {
+              // Suppress errors, no output is necessary
+              console.log('Failed to add labels, but continuing execution.');
+            }

@@ -2,6 +2,8 @@ name: Prevent PRs to Main
 
 on:
   pull_request:
+    branches:
+      - main
     types: [opened, edited]
 
 jobs:
@@ -16,24 +18,24 @@ jobs:
           BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
           SOURCE_BRANCH="${{ github.head_ref }}"
           
-          if [[ "$BASE_BRANCH" == "main" ]]; then
+          if [ "$BASE_BRANCH" == "main" ]; then
             if [[ ! "$SOURCE_BRANCH" =~ ^(hotfix/|release/) ]]; then
               echo "The source branch ($SOURCE_BRANCH) does not follow the naming conventions."
               
               # Comment on the PR
               gh pr comment ${{ github.event.pull_request.number }} \
-                -b "This PR cannot be merged into the `main` branch. Only branches that start with `hotfix/` or `release/` are allowed to merge into `main`. Please update the source branch name accordingly or target a different branch."
+                -b "This PR cannot be merged into the \`main\` branch. Only branches that start with \`hotfix/\` or \`release/\` are allowed to merge into \`main\`. Please update the source branch name accordingly or target a different branch."
               
               # Close the PR
               gh pr close ${{ github.event.pull_request.number }}
               
               echo "PR closed due to naming convention issue."
-              exit 1
+              exit 1  # Fail the job
             else
               echo "The PR source branch follows the naming conventions."
             fi
           else
-            echo "Base branch is not `main`, no action needed."
+            echo "Base branch is not \`main\`, no action needed."
           fi
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
