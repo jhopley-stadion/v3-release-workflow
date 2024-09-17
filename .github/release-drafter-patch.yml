@@ -1,0 +1,21 @@
+name-template: 'Hotfix {version}'
+tag-template: '$NEXT_PATCH_VERSION'
+template: |
+  ## What’s Changed in this Hotfix
+
+  $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
+
+categories:
+  - title: Fixes 🐛
+    labels:
+      - bug
+      - fix
+      - defect
+      - hotfix
+  - title: Other Changes
+    labels:
+      - "*"
