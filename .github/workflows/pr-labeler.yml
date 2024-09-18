@@ -45,12 +45,12 @@ jobs:
               });
               console.log(`Labels added: ${labels.join(', ')}`);
 
-              // Post a comment on the PR with the added labels
+              // Post a comment on the PR with the added labels in a code block
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: `Labels have been added to this PR: ${labels.join(', ')}`
+                body: `Labels have been added to this PR:\n\n\`\`\`\n${labels.join('\n')}\n\`\`\``
               });
               console.log('Comment added to PR');
             } catch (error) {
