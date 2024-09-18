@@ -9,10 +9,16 @@ on:
 jobs:
   check-pr:
     runs-on: ubuntu-latest
+
     steps:
+      # Step 1: Checkout code
+      # This step checks out the code from the repository so that the workflow can access it for the PR checks.
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Check PR branch names
+      # This step checks if the source branch of the PR follows the naming conventions (i.e., starts with `hotfix/` or `release/`).
+      # If the branch name does not follow the conventions, it logs an error, posts a comment on the PR, and optionally closes the PR.
       - name: Check PR branch names
         run: |
           BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
@@ -29,9 +35,10 @@ jobs:
                 -b ":x: **This PR cannot be merged into the \`main\` branch.** Only branches that start with \`hotfix/\` or \`release/\` are allowed. The current source branch is: \`$SOURCE_BRANCH\`."
 
               # Optionally close the PR
+              echo "Closing PR #${{ github.event.pull_request.number }}"
               gh pr close ${{ github.event.pull_request.number }}
               
-              # Fail the job
+              # Fail the job to prevent merge
               exit 1
             else
               echo "The PR source branch follows the naming conventions."
@@ -40,8 +47,10 @@ jobs:
             echo "Base branch is not \`main\`, no action needed."
           fi
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the built-in token
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the built-in token for GitHub CLI authentication
 
+      # Step 3: Verify GitHub CLI Authentication
+      # This step verifies that the GitHub CLI is authenticated correctly using the provided GH_TOKEN.
       - name: Verify GitHub CLI Authentication
         run: gh auth status
         env:
