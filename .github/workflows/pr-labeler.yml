@@ -37,7 +37,7 @@ jobs:
 
             try {
               // Add labels to the pull request
-              await github.issues.addLabels({
+              await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
@@ -46,7 +46,7 @@ jobs:
               console.log(`Labels added: ${labels.join(', ')}`);
 
               // Post a comment on the PR with the added labels
-              await github.issues.createComment({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
