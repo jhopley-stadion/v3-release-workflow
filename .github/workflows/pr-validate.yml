@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - main
-    types: [opened, edited, synchronize]  
+    types: [opened, edited, synchronize]
 
 jobs:
   check-pr:
@@ -20,12 +20,13 @@ jobs:
           
           if [ "$BASE_BRANCH" == "main" ]; then
             if [[ ! "$SOURCE_BRANCH" =~ ^(hotfix/|release/) ]]; then
-              echo "::error::The source branch ($SOURCE_BRANCH) does not follow the naming conventions. Only branches that start with 'hotfix/' or 'release/' are allowed to merge into 'main'."
+              # Add a detailed error message in the logs and GitHub UI
+              echo "::error file=pr-check.sh::The source branch ($SOURCE_BRANCH) does not follow the naming conventions. Only branches that start with 'hotfix/' or 'release/' are allowed to merge into 'main'."
 
-              # Comment on the PR
+              # Optionally add a PR comment for more visibility
               gh pr comment ${{ github.event.pull_request.number }} \
                 -b "This PR cannot be merged into the \`main\` branch. Only branches that start with \`hotfix/\` or \`release/\` are allowed to merge into \`main\`. Please update the source branch name accordingly or target a different branch."
-              
+
               # Close the PR
               gh pr close ${{ github.event.pull_request.number }}
               
