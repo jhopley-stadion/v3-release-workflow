@@ -1,0 +1,48 @@
+name: Prevent PRs that are not release/hotfix to Main branch
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, edited, synchronize]
+
+jobs:
+  check-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check PR branch names
+        run: |
+          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          
+          if [ "$BASE_BRANCH" == "main" ]; then
+            if [[ ! "$SOURCE_BRANCH" =~ ^(hotfix/|release/) ]]; then
+              # Log error for the "Checks" tab
+              echo "::error::The source branch '$SOURCE_BRANCH' does not follow the naming conventions."
+
+              # Add a PR comment with a detailed error message
+              echo "Posting comment to PR #${{ github.event.pull_request.number }}"
+              gh pr comment ${{ github.event.pull_request.number }} \
+                -b ":x: **This PR cannot be merged into the \`main\` branch.** Only branches that start with \`hotfix/\` or \`release/\` are allowed. The current source branch is: \`$SOURCE_BRANCH\`."
+
+              # Optionally close the PR
+              gh pr close ${{ github.event.pull_request.number }}
+              
+              # Fail the job
+              exit 1
+            else
+              echo "The PR source branch follows the naming conventions."
+            fi
+          else
+            echo "Base branch is not \`main\`, no action needed."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the built-in token
+
+      - name: Verify GitHub CLI Authentication
+        run: gh auth status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure GH_TOKEN is set correctly
