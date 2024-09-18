@@ -1,4 +1,4 @@
-name: Prevent PRs to Main
+name: Prevent PRs that are not release/hotfix to Main branch
 
 on:
   pull_request:
@@ -20,8 +20,8 @@ jobs:
           
           if [ "$BASE_BRANCH" == "main" ]; then
             if [[ ! "$SOURCE_BRANCH" =~ ^(hotfix/|release/) ]]; then
-              echo "The source branch ($SOURCE_BRANCH) does not follow the naming conventions."
-              
+              echo "::error::The source branch ($SOURCE_BRANCH) does not follow the naming conventions. Only branches that start with 'hotfix/' or 'release/' are allowed to merge into 'main'."
+
               # Comment on the PR
               gh pr comment ${{ github.event.pull_request.number }} \
                 -b "This PR cannot be merged into the \`main\` branch. Only branches that start with \`hotfix/\` or \`release/\` are allowed to merge into \`main\`. Please update the source branch name accordingly or target a different branch."
@@ -30,7 +30,7 @@ jobs:
               gh pr close ${{ github.event.pull_request.number }}
               
               echo "PR closed due to naming convention issue."
-              exit 1  # Fail the job
+              exit 1  # Fail the job to display it in the PR UI
             else
               echo "The PR source branch follows the naming conventions."
             fi
