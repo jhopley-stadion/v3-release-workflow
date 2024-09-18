@@ -140,31 +140,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 10: Check and update release draft
-      # Checks if a release draft exists for the new tag. If not, it creates a new draft.
-      # Updates the release draft with the correct notes and title.
-      - name: Check and Update Release Draft
+    # Step 9: List all releases and find draft to update
+      - name: List and Find Draft to Update
+        id: find_draft
         run: |
-          echo "Checking if release draft exists for tag ${{ env.new_tag }}..."
-          release_id=$(gh release view ${{ env.new_tag }} --json id --jq '.id' || echo "not found")
-          echo "Release ID: $release_id"
-          
-          if [ "$release_id" = "not found" ]; then
-            echo "No release draft found with tag ${{ env.new_tag }}. Creating a new draft..."
-            gh release create ${{ env.new_tag }} --title "Release ${{ env.new_tag }}" --draft=true --target main
-            release_id=$(gh release view ${{ env.new_tag }} --json id --jq '.id')
-            echo "New release draft created with ID: $release_id"
-          else
-            echo "Release draft found with ID: $release_id"
-          fi
-      
-          echo "Updating release draft with notes..."
-          notes=$(gh release view ${{ env.new_tag }} --json body --jq '.body' || echo "No notes found")
-          echo "Notes: $notes"
-          
-          gh release edit ${{ env.new_tag }} --notes "$notes" --title "Release ${{ env.new_tag }}"
+          echo "Fetching draft release tag names..."
+          draft_tags=$(gh release list --limit 3 --json tagName,isDraft --jq '.[] | select(.isDraft == true) | .tagName')
+          echo "Draft tags: $draft_tags"
+          for tag in $draft_tags; do
+            if [[ "$tag" == "$LATEST_DRAFT_TAG" ]]; then
+              echo "Found draft with tag: $tag"
+              gh release edit "$tag" --tag "$new_tag"
+              echo "Updated draft tag to: $new_tag"
+              break
+            fi
+          done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST_DRAFT_TAG: ${{ env.latest_tag }}
 
       # Step 11: Publish the release
       # If this is the initial version, it creates and publishes the release.
