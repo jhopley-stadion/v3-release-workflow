@@ -32,6 +32,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create initial tag if none exists
+        if: steps.get_latest_version.outputs.latest_tag == '1.0.0'
+        run: |
+          echo "No tags found. Creating initial tag 1.0.0..."
+          git tag 1.0.0
+          git push origin 1.0.0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Get branch type
         id: get_branch_type
         run: |
