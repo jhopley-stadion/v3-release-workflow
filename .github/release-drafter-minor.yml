@@ -1,5 +1,5 @@
 name-template: 'Release {version}'
-tag-template: '$NEXT_MINOR_VERSION'
+tag-template: '_DRAFT_'
 template: |
   ## What’s Changed in this release
 

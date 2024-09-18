@@ -140,44 +140,20 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # Step 9: List all releases and find draft to update
-      - name: List and Find Draft to Update
-        id: find_draft
-        run: |
-          echo "Fetching draft release tag names..."
-          draft_tags=$(gh release list --limit 3 --json tagName,isDraft --jq '.[] | select(.isDraft == true) | .tagName')
-          echo "Draft tags: $draft_tags"
-          for tag in $draft_tags; do
-            if [[ "$tag" == "$LATEST_DRAFT_TAG" ]]; then
-              echo "Found draft with tag: $tag"
-              gh release edit "$tag" --tag "$new_tag"
-              echo "Updated draft tag to: $new_tag"
-              break
-            fi
-          done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LATEST_DRAFT_TAG: ${{ env.latest_tag }}
 
-      # Step 11: Publish the release
+      # Step 10: Publish the release
       # If this is the initial version, it creates and publishes the release.
       # Otherwise, it publishes the new release by updating the existing draft.
       - name: Publish Release
         id: publish_release
         run: |
-          if [[ "${{ env.initial_version }}" == "true" ]]; then
-            echo "Publishing initial version release (1.0.0)..."
-            gh release create 1.0.0 --title "Initial Release 1.0.0" --target main --draft=false
-            echo "Initial release 1.0.0 published."
-          else
-            echo "Publishing new release ${{ env.new_tag }}..."
-            gh release edit ${{ env.new_tag }} --draft=false
-            echo "Release published: ${{ env.new_tag }}"
-          fi
+          echo "Publishing new release ${{ env.new_tag }}..."
+          gh release edit _DRAFT_ --tag ${{ env.new_tag }} --draft=false
+          echo "Release published: ${{ env.new_tag }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 12: Rebase develop with main for hotfixes
+      # Step 11: Rebase develop with main for hotfixes
       # If the branch type is a hotfix, this step rebases the develop branch with the changes from main.
       - name: Rebase develop with main for hotfixes
         if: env.branch_type == 'hotfix'
