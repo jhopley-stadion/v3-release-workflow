@@ -20,10 +20,11 @@ jobs:
           
           if [ "$BASE_BRANCH" == "main" ]; then
             if [[ ! "$SOURCE_BRANCH" =~ ^(hotfix/|release/) ]]; then
-              # Log error for the "Checks" tab (optional)
+              # Log error for the "Checks" tab
               echo "::error::The source branch '$SOURCE_BRANCH' does not follow the naming conventions."
 
               # Add a PR comment with a detailed error message
+              echo "Posting comment to PR #${{ github.event.pull_request.number }}"
               gh pr comment ${{ github.event.pull_request.number }} \
                 -b ":x: **This PR cannot be merged into the \`main\` branch.** Only branches that start with \`hotfix/\` or \`release/\` are allowed. The current source branch is: \`$SOURCE_BRANCH\`."
 
@@ -39,4 +40,9 @@ jobs:
             echo "Base branch is not \`main\`, no action needed."
           fi
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the built-in token
+
+      - name: Verify GitHub CLI Authentication
+        run: gh auth status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure GH_TOKEN is set correctly
