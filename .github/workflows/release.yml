@@ -1,5 +1,4 @@
 name: Create Release
-
 on:
   push:
     branches:
@@ -15,11 +14,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository
+      # This step checks out the repository so that the workflow can access the code and tags.
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      # Step 2: Get latest version
+      # This step retrieves the latest tag from the repository.
+      # If no tag is found, it defaults to the initial version 1.0.0.
       - name: Get latest version
         id: get_latest_version
         run: |
@@ -38,6 +42,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Step 3: Create initial tag if none exists
+      # If no tag exists, this step creates the initial version tag 1.0.0 and pushes it to the repository.
       - name: Create initial tag if none exists
         if: env.initial_version == 'true'
         run: |
@@ -48,6 +54,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Step 4: Get branch type
+      # This step determines the branch type (release or hotfix) based on the commit message.
+      # It sets the correct configuration file for Release Drafter based on the branch type.
       - name: Get branch type
         id: get_branch_type
         run: |
@@ -69,12 +78,18 @@ jobs:
           echo "branch_type=$branch_type" >> $GITHUB_ENV
           echo "config_file=$config_file" >> $GITHUB_ENV
 
+      # Step 5: Debugging step
+      # Outputs the values of the latest tag, branch type, and whether it's the initial version for debugging purposes.
       - name: Debug latest_tag and branch_type
         run: |
           echo "latest_tag is: ${{ env.latest_tag }}"
           echo "branch_type is: ${{ env.branch_type }}"
           echo "initial_version is: ${{ env.initial_version }}"
 
+      # Step 6: Determine whether to increment the version
+      # This step reads the latest version tag and increments the version based on the branch type.
+      # - For a release branch, it increments the minor version and resets the patch to 0.
+      # - For a hotfix branch, it increments the patch version.
       - name: Determine whether to increment version
         id: determine_increment
         if: env.latest_tag != '' && env.initial_version == 'false'
@@ -103,6 +118,8 @@ jobs:
           latest_tag: ${{ env.latest_tag }}
           branch_type: ${{ env.branch_type }}
 
+      # Step 7: Draft release notes
+      # This step uses Release Drafter to draft release notes using the appropriate configuration file.
       - name: Draft Release Notes (Minor or Patch)
         uses: release-drafter/release-drafter@v5
         with:
@@ -110,15 +127,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
+      # Step 8: Wait for Release Notes to be Drafted
+      # Waits for a few seconds to ensure the release notes are properly drafted.
       - name: Wait for Release Notes to be Drafted
         run: sleep 10 # Adjust if needed to ensure notes are drafted
 
+      # Step 9: List all releases
+      # Outputs a list of all releases in the repository for debugging or review purposes.
       - name: List All Releases
         run: |
           gh release list
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Step 10: Check and update release draft
+      # Checks if a release draft exists for the new tag. If not, it creates a new draft.
+      # Updates the release draft with the correct notes and title.
       - name: Check and Update Release Draft
         run: |
           echo "Checking if release draft exists for tag ${{ env.new_tag }}..."
@@ -126,8 +150,12 @@ jobs:
           echo "Release ID: $release_id"
           
           if [ "$release_id" = "not found" ]; then
-            echo "No release draft found with tag ${{ env.new_tag }}"
-            exit 1
+            echo "No release draft found with tag ${{ env.new_tag }}. Creating a new draft..."
+            gh release create ${{ env.new_tag }} --title "Release ${{ env.new_tag }}" --draft=true --target main
+            release_id=$(gh release view ${{ env.new_tag }} --json id --jq '.id')
+            echo "New release draft created with ID: $release_id"
+          else
+            echo "Release draft found with ID: $release_id"
           fi
       
           echo "Updating release draft with notes..."
@@ -138,6 +166,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Step 11: Publish the release
+      # If this is the initial version, it creates and publishes the release.
+      # Otherwise, it publishes the new release by updating the existing draft.
       - name: Publish Release
         id: publish_release
         run: |
@@ -153,6 +184,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Step 12: Rebase develop with main for hotfixes
+      # If the branch type is a hotfix, this step rebases the develop branch with the changes from main.
       - name: Rebase develop with main for hotfixes
         if: env.branch_type == 'hotfix'
         run: |
@@ -163,4 +196,4 @@ jobs:
           git checkout develop
           git rebase origin/main
           git push origin develop --force-with-lease
-          echo "Rebase complete and pushed"
+          echo "Rebase complete and
