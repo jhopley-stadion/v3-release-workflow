@@ -1,50 +1,49 @@
-name: Auto Label PR Based on Branch Type
+name: Tag Notification and Comment
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    branches:
+      - main
+    types: [opened, edited, synchronize]
 
 jobs:
-  label-pr:
+  tag-notification:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write  # Ensure the token can write comments on PRs
+      contents: read  # Ensure the token can read repository content
+
     steps:
-      - name: Label PR based on branch name
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const branch = context.payload.pull_request.head.ref;
-            let labels = [];
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-            if (branch.startsWith('feature/')) {
-              labels.push('feature');
-            } else if (branch.startsWith('bug/')) {
-              labels.push('bug');
-            } else if (branch.startsWith('defect/')) {
-              labels.push('defect');
-            } else if (branch.startsWith('hotfix/')) {
-              labels.push('hotfix');
-            } else if (branch.startsWith('release/')) {
-              labels.push('release');
-            } else if (branch.startsWith('chore/')) {
-              labels.push('chore');
-            } else if (branch.startsWith('refactor/')) {
-              labels.push('refactor');
-            } else if (branch.startsWith('test/')) {
-              labels.push('test');
-            } else {
-              labels.push('other');  // Fallback label for any unrecognized branch types
-            }
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh
 
-            try {
-              // Add labels to the pull request
-              await github.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                labels: labels
-              });
-              console.log(`Labels added: ${labels.join(', ')}`);
-            } catch {
-              // Suppress errors, no output is necessary
-              console.log('Failed to add labels, but continuing execution.');
-            }
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Retrieve Tags for PR
+        id: get-tags
+        run: |
+          # Fetch all tags and print them
+          git fetch --tags
+          TAGS=$(git tag --contains ${{ github.sha }})
+          echo "TAGS=$TAGS" >> $GITHUB_ENV
+
+      - name: Comment on PR with Tags
+        run: |
+          TAGS="${{ env.TAGS }}"
+          if [ -n "$TAGS" ]; then
+            gh pr comment ${{ github.event.pull_request.number }} \
+              -b ":label: **Tags Added to PR:**\n\nThe following tags have been added to this PR:\n\n$TAGS"
+          else
+            echo "No tags found for this PR."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
