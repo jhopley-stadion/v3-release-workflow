@@ -147,9 +147,9 @@ jobs:
       - name: Publish Release
         id: publish_release
         run: |
-          echo "Publishing new release ${{ env.new_tag }}..."
-          gh release edit _DRAFT_ --tag ${{ env.new_tag }} --draft=false
-          echo "Release published: ${{ env.new_tag }}"
+          echo "Publishing new release ${{ env.latest_tag }}..."
+          gh release edit _DRAFT_ --tag ${{ env.latest_tag }} --draft=false
+          echo "Release published: ${{ env.latest_tag }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           latest_tag: ${{ env.latest_tag }}
