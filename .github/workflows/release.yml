@@ -126,7 +126,7 @@ jobs:
           config-name: ${{ env.config_file }}  # Use correct drafter file based on branch type
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
       # Step 8: Wait for Release Notes to be Drafted
       # Waits for a few seconds to ensure the release notes are properly drafted.
       - name: Wait for Release Notes to be Drafted
@@ -196,4 +196,4 @@ jobs:
           git checkout develop
           git rebase origin/main
           git push origin develop --force-with-lease
-          echo "Rebase complete and
+         
