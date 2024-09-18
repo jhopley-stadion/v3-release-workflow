@@ -1,0 +1,59 @@
+name: Auto Label PR Based on Branch Type
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  label-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label PR based on branch name
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+            let labels = [];
+
+            if (branch.startsWith('feature/')) {
+              labels.push('feature');
+            } else if (branch.startsWith('bug/')) {
+              labels.push('bug');
+            } else if (branch.startsWith('defect/')) {
+              labels.push('defect');
+            } else if (branch.startsWith('hotfix/')) {
+              labels.push('hotfix');
+            } else if (branch.startsWith('release/')) {
+              labels.push('release');
+            } else if (branch.startsWith('chore/')) {
+              labels.push('chore');
+            } else if (branch.startsWith('refactor/')) {
+              labels.push('refactor');
+            } else if (branch.startsWith('test/')) {
+              labels.push('test');
+            } else {
+              labels.push('other');  // Fallback label for any unrecognized branch types
+            }
+
+            try {
+              // Add labels to the pull request
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: labels
+              });
+              console.log(`Labels added: ${labels.join(', ')}`);
+
+              // Post a comment on the PR with the added labels
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `Labels have been added to this PR: ${labels.join(', ')}`
+              });
+              console.log('Comment added to PR');
+            } catch (error) {
+              // Log any errors
+              console.error('Error adding labels or posting comment:', error);
+            }

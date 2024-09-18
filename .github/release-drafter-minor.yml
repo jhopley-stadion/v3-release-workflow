@@ -1,0 +1,36 @@
+name-template: 'Release {version}'
+tag-template: '$NEXT_MINOR_VERSION'
+template: |
+  ## What’s Changed in this release
+
+  $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS
+
+categories:
+  - title: Breaking Changes 🛠
+    labels:
+      - breaking-change
+  - title: New Features 🎉
+    labels:
+      - feature
+  - title: Fixes 🐛
+    labels:
+      - bug
+      - fix
+      - defect
+      - hotfix
+  - title: Rework 🔄
+    labels:
+      - refactor
+  - title: Chores 🧹
+    labels:
+      - chore
+  - title: Tests 🧪
+    labels:
+      - test
+  - title: Other Changes
+    labels:
+      - "*"
