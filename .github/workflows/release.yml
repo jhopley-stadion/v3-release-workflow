@@ -152,6 +152,7 @@ jobs:
           echo "Release published: ${{ env.new_tag }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          latest_tag: ${{ env.latest_tag }}
 
       # Step 11: Rebase develop with main for hotfixes
       # If the branch type is a hotfix, this step rebases the develop branch with the changes from main.
