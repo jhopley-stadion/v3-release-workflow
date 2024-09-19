@@ -1,0 +1,35 @@
+name: Create Confluence Release Notes
+on:
+  workflow_run:
+    workflows: ["Create Release"]
+    types:
+      - completed
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      # Step 2: Fetch release notes
+      - name: Fetch release notes
+        id: fetch_release_notes
+        run: |
+          release_notes=$(gh release view --json body --jq '.body')
+          echo "${release_notes}" > docs/release_notes.md  # Save in a 'docs' folder
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 3: Publish Markdown to Confluence
+      - name: Publish Markdown to Confluence
+        uses: markdown-confluence/publish-action@v5
+        with:
+          atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
+          folderToPublish: 'docs' 
+          contentRoot: '/docs'     # The root path for published content on Confluence
+          configFile: '.markdown-confluence.json'  # If you have a configuration file
+
+
+          
