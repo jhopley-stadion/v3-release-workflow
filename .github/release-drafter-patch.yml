@@ -1,5 +1,5 @@
 name-template: 'Hotfix {version}'
-tag-template: '_DAFT_'
+tag-template: '_DRAFT_'
 template: |
   ## What’s Changed in this Hotfix
 
