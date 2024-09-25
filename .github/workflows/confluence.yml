@@ -24,10 +24,11 @@ jobs:
           release_notes=$(gh release view $latest_tag --json body --jq '.body')
 
           # Create a 'docs' folder if it doesn't exist
-          mkdir docs
+          mkdir -p docs
           
           # Save the release notes with the version number in the file name
-          echo "${release_notes}" > "docs/release_notes_${latest_tag}.md"  # Save in a 'docs' folder
+          echo "${release_notes}" > "docs/release_notes_${latest_tag}.md"  
+          # Save in a 'docs' folder
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -39,3 +40,4 @@ jobs:
           folderToPublish: 'docs' 
           contentRoot: '/docs'     # The root path for published content on Confluence
           configFile: '.markdown-confluence.json'  # If you have a configuration file
+
