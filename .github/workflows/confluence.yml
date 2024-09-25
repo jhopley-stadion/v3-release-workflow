@@ -59,5 +59,4 @@ jobs:
           atlassianUserName: 'john@stadion.io'
           atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
           folderToPublish: 'docs' 
-          contentRoot: '/'     # The root path for published content on Confluence
           # configFile: '.markdown-confluence.json'  # If you have a configuration file
