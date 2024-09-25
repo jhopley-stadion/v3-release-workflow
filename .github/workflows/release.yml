@@ -5,9 +5,9 @@ on:
       - main
 
 permissions:
-  contents: write  # Needed to create and update releases
-  issues: read     # Needed if Release Drafter uses issues
-  deployments: write  # If your workflow needs deployment permissions
+  contents: write  
+  issues: read    
+  deployments: write 
 
 jobs:
   create-release:
