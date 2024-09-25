@@ -36,6 +36,9 @@ jobs:
       - name: Publish Markdown to Confluence
         uses: markdown-confluence/publish-action@v5
         with:
+          confluenceBaseUrl: 'https://stadion.atlassian.net/'
+          confluenceParentId: 'testspace'
+          atlassianUserName: 'john@stadion.io'
           atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
           folderToPublish: 'docs' 
           contentRoot: '/docs'     # The root path for published content on Confluence
