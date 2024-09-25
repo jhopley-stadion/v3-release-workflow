@@ -18,10 +18,13 @@ jobs:
         id: fetch_release_notes
         run: |
           # Fetch the latest tag
-          latest_tag=$(git describe --tags --abbrev=0)
+          latest_tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
           
           # Fetch the release notes
           release_notes=$(gh release view $latest_tag --json body --jq '.body')
+
+          # Create a 'docs' folder if it doesn't exist
+          mkdir docs
           
           # Save the release notes with the version number in the file name
           echo "${release_notes}" > "docs/release_notes_${latest_tag}.md"  # Save in a 'docs' folder
