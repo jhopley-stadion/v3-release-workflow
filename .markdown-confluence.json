@@ -1,7 +1,0 @@
-{
-  "confluenceBaseUrl": "https://stadion.atlassian.net",
-  "confluenceParentId": "testspace",
-  "atlassianUserName": "jhopley-stadion",
-  "folderToPublish": "docs",
-  "contentRoot": "/docs"
-}
