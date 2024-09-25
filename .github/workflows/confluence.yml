@@ -55,7 +55,7 @@ jobs:
         uses: markdown-confluence/publish-action@v5
         with:
           confluenceBaseUrl: 'https://stadion.atlassian.net/'
-          confluenceParentId: 'testspace'
+          confluenceParentId: 2739208609
           atlassianUserName: 'john@stadion.io'
           atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
           folderToPublish: 'docs' 
