@@ -12,7 +12,7 @@ jobs:
       # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       # Step 2: Fetch release notes
       - name: Fetch release notes
         id: fetch_release_notes
@@ -27,12 +27,30 @@ jobs:
           mkdir -p docs
           
           # Save the release notes with the version number in the file name
-          echo "${release_notes}" > "docs/release_notes_${latest_tag}.md"  
-          # Save in a 'docs' folder
+          echo "${release_notes}" > "docs/release_notes_${latest_tag}.md"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Publish Markdown to Confluence
+      # Step 3: Verify docs folder and permissions
+      - name: Verify docs folder and permissions
+        run: |
+          echo "Verifying contents of the workspace..."
+          ls -la
+          echo "Verifying contents and permissions of the docs folder..."
+          ls -la docs
+
+          echo "Checking file permissions in the docs folder..."
+          ls -l docs/release_notes_*.md
+          
+          # Print the content of the release notes file for verification
+          echo "Printing the content of the release notes file..."
+          cat docs/release_notes_*.md
+
+      # Step 4: Ensure correct permissions for the docs folder and files
+      - name: Set permissions for docs folder
+        run: chmod -R 755 docs
+
+      # Step 5: Publish Markdown to Confluence
       - name: Publish Markdown to Confluence
         uses: markdown-confluence/publish-action@v5
         with:
@@ -43,4 +61,3 @@ jobs:
           folderToPublish: 'docs' 
           contentRoot: '/docs'     # The root path for published content on Confluence
           configFile: '.markdown-confluence.json'  # If you have a configuration file
-
