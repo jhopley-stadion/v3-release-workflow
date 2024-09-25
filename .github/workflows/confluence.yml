@@ -27,7 +27,7 @@ jobs:
           mkdir -p docs
           
           # Save the release notes with the version number in the file name
-          echo "${release_notes}" > "docs/release_notes_${latest_tag}.md"
+          echo "${release_notes}" > "docs/Release v${latest_tag}.md"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
