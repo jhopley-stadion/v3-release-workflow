@@ -21,6 +21,6 @@ jobs:
 
       # Step 3: Run the external JavaScript file
       - name: Run PR labeling script
-        run: node workflow-scripts/labeler.js
+        run: node ./workflow-scripts/labeler.workflow.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
