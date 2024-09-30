@@ -19,7 +19,11 @@ jobs:
         with:
           node-version: '20'
 
-      # Step 3: Run the external JavaScript file
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install @actions/github
+
+      # Step 4: Run the external JavaScript file
       - name: Run PR labeling script
         run: node ./workflow-scripts/labeler.workflow.mjs
         env:
