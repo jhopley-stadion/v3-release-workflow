@@ -1,5 +1,6 @@
+import pkg from '@actions/github'; // Use default import
+const { GitHub, context } = pkg; // Destructure to get GitHub and context
 import fs from 'fs';
-import { GitHub, context } from '@actions/github';
 
 /**
  * Loads the branch configuration file.
@@ -41,6 +42,7 @@ const determineLabels = (targetBranch, branchType, config) => {
 
   // Check if the target branch is defined in the config
   if (config.branchSystem[targetBranch]) {
+    
     // Get the list of accepted branch types for the target branch
     const acceptedTypes = config.branchSystem[targetBranch].accepts;
 
@@ -117,14 +119,5 @@ const labelPR = async (context, github) => {
   await addLabelsAndComment(context, github, labels);
 };
 
-// Execute the main labeling function
-const run = async () => {
-  const github = new GitHub(process.env.GITHUB_TOKEN); // Create GitHub API client
-  await labelPR(context, github); // Call the labeling function
-};
-
-// Invoke the run function to execute the script
-run().catch(error => {
-  console.error('Error running the labeling process:', error);
-  process.exit(1); // Exit with error status
-});
+// Execute the labeling function when the script runs
+labelPR(context, new GitHub(process.env.GITHUB_TOKEN));
