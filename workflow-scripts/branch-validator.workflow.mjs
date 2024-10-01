@@ -1,21 +1,14 @@
-import fs from 'fs';
 import pkg from '@actions/github';
+import {
+  loadConfig
+} from './untils.workflow.mjs';
+import { CONFIG_PATH } from './constants.workflow.mjs';
 
-const { getOctokit, context } = pkg;
+const {
+  getOctokit,
+  context
+} = pkg;
 
-/**
- * Loads the branch configuration file.
- * @param {string} configPath - The path to the config file.
- * @returns {Object} - The parsed configuration object.
- */
-const loadConfig = (configPath) => {
-  try {
-    const configContent = fs.readFileSync(configPath, 'utf-8');
-    return JSON.parse(configContent);
-  } catch (error) {
-    throw new Error(`Failed to load config file: ${error.message}`);
-  }
-};
 
 /**
  * Validates whether the source branch type is accepted for the given target branch.
@@ -92,9 +85,8 @@ const handleValidBranch = async (context, octokit, sourceBranch) => {
  * @param {Object} octokit - The GitHub API client.
  */
 const validatePR = async (context, octokit) => {
-  const configPath = './workflow.config.json'; // Ensure this path is correct
-  
-  const config = loadConfig(configPath);
+
+  const config = loadConfig(CONFIG_PATH);
   const targetBranch = context.payload.pull_request.base.ref;
   const sourceBranch = context.payload.pull_request.head.ref;
 

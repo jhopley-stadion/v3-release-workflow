@@ -1,31 +1,9 @@
-import fs from 'fs';
 import pkg from '@actions/github';
+import { loadConfig } from './untils.workflow.mjs'; 
+import { CONFIG_PATH } from './constants.workflow.mjs';
 
 const { getOctokit, context } = pkg;  // Use getOctokit instead of GitHub
 
-/**
- * Loads the branch configuration file.
- * @param {string} configPath - The path to the config file.
- * @returns {Object} - The parsed configuration object.
- * @throws {Error} - Throws an error if the config file cannot be read or parsed.
- */
-const loadConfig = (configPath) => {
-  try {
-    if (!fs.existsSync(configPath)) {
-      throw new Error(`Configuration file not found at path: ${configPath}`);
-    }
-
-    const configContent = fs.readFileSync(configPath, 'utf-8');
-
-    if (!configContent) {
-      throw new Error(`Configuration file is empty: ${configPath}`);
-    }
-
-    return JSON.parse(configContent);
-  } catch (error) {
-    throw new Error(`Failed to load config file: ${error.message}`);
-  }
-};
 
 /**
  * Extracts the branch type from the source branch name.
@@ -125,10 +103,9 @@ const addLabelsAndComment = async (context, octokit, labels) => {
  */
 const labelPR = async (context, octokit) => {
   try {
-    const configPath = './workflow.config.json';
 
     // Load the configuration file
-    const config = loadConfig(configPath);
+    const config = loadConfig(CONFIG_PATH);
 
     // Extract the branch we are merging into (target branch)
     const targetBranch = context.payload.pull_request.base.ref;
