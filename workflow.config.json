@@ -9,6 +9,7 @@
     "develop": {
       "accepts": [
         "feature",
+        "fix",
         "bug",
         "defect",
         "refactor",
