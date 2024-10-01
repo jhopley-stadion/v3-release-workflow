@@ -1,4 +1,5 @@
 name: Create Release
+
 on:
   push:
     branches:
@@ -15,90 +16,35 @@ jobs:
 
     steps:
       # Step 1: Checkout repository
-      # This step checks out the repository to ensure that the workflow has access to the code and tags.
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       # Step 2: Get latest tag or create initial tag
-      # This step fetches the latest tag from the repository. If no tags are found, it creates and pushes the initial tag (1.0.0).
       - name: Get latest tag or create initial tag
         id: get_or_create_tag
-        run: |
-          echo "Fetching latest tag..."
-          latest_tag=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' || echo "")
-          if [[ -z "$latest_tag" ]]; then
-            echo "No tags found. Setting initial version to 1.0.0"
-            latest_tag="1.0.0"
-            echo "initial_version=true" >> $GITHUB_ENV
-            git tag 1.0.0
-            git push origin 1.0.0
-            echo "Initial tag created."
-          else
-            echo "Initial version flag not set."
-            echo "initial_version=false" >> $GITHUB_ENV
-          fi
-          echo "Latest tag is: $latest_tag"
-          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+        run: node ./workflow-scripts/get-or-create-tag.workflow.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Step 3: Determine branch type and select configuration file
-      # This step extracts the branch name from the commit message, determines the branch type (release or hotfix), 
-      # and selects the appropriate Release Drafter configuration file.
       - name: Determine branch type and config
         id: get_branch_info
-        run: |
-          echo "Extracting branch name from commit message..."
-          branch_name=$(jq -r .head_commit.message < "$GITHUB_EVENT_PATH" | grep -oP 'Merge pull request #[0-9]+ from \K\S+')
-          branch_name=$(echo "$branch_name" | sed 's/^[^/]*\///')
-          echo "Branch name extracted: $branch_name"
-          if [[ "$branch_name" == release/* ]]; then
-            branch_type="release"
-            config_file="release-drafter-minor.yml"
-          elif [[ "$branch_name" == hotfix/* ]]; then
-            branch_type="hotfix"
-            config_file="release-drafter-patch.yml"
-          else
-            echo "Branch does not match expected patterns"
-            exit 1
-          fi
-          echo "Branch type determined: $branch_type"
-          echo "branch_type=$branch_type" >> $GITHUB_ENV
-          echo "config_file=$config_file" >> $GITHUB_ENV
+        run: node ./workflow-scripts/determine-branch-type.workflow.mjs
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
 
       # Step 4: Increment version based on branch type
-      # This step increments the version based on the branch type. For a release branch, it increments the minor version and resets the patch to 0.
-      # For a hotfix branch, it increments the patch version.
       - name: Increment version
         id: increment_version
         if: env.latest_tag != '' && env.initial_version == 'false'
-        run: |
-          IFS='.' read -r major minor patch <<< "${{ env.latest_tag }}"
-          if [[ -z "$major" || -z "$minor" || -z "$patch" ]]; then
-            echo "Error: latest_tag is not in the expected format."
-            exit 1
-          fi
-          echo "Current version: $major.$minor.$patch"
-          if [[ "${{ env.branch_type }}" == "release" ]]; then
-            minor=$((minor + 1))
-            patch=0
-          elif [[ "${{ env.branch_type }}" == "hotfix" ]]; then
-            patch=$((patch + 1))
-          else
-            echo "Unknown branch type"
-            exit 1
-          fi
-          new_tag="$major.$minor.$patch"
-          echo "New tag calculated: $new_tag"
-          echo "new_tag=$new_tag" >> $GITHUB_ENV
+        run: node ./workflow-scripts/increment-version.workflow.mjs
         env:
           latest_tag: ${{ env.latest_tag }}
           branch_type: ${{ env.branch_type }}
 
       # Step 5: Draft release notes
-      # This step uses Release Drafter to draft release notes based on the branch type and the selected configuration file.
       - name: Draft Release Notes
         uses: release-drafter/release-drafter@v5
         with:
@@ -107,19 +53,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Step 6: Publish the release
-      # This step publishes the release by updating the existing draft with the new tag name.
       - name: Publish Release
         id: publish_release
-        run: |
-          echo "Publishing new release ${{ env.new_tag }}..."
-          gh release edit _DRAFT_ --tag ${{ env.new_tag }} --title "Release v${{ env.new_tag }}" --draft=false 
-          echo "Release published: ${{ env.new_tag }}"
+        run: node ./workflow-scripts/publish-release.workflow.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           new_tag: ${{ env.new_tag }}
 
       # Step 7: Rebase develop with main for hotfixes
-      # If the branch type is hotfix, this step rebases the develop branch with changes from the main branch.
       - name: Rebase develop with main for hotfixes
         if: env.branch_type == 'hotfix'
         run: |
