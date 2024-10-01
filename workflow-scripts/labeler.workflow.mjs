@@ -98,7 +98,7 @@ const addLabelsAndComment = async (context, octokit, labels) => {
  * @param {Object} octokit - The GitHub API client.
  */
 const labelPR = async (context, octokit) => {
-  const configPath = '../workflow.config.json';
+  const configPath = './workflow.config.json';
   
   // Load the configuration file
   const config = loadConfig(configPath);
