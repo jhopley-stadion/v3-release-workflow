@@ -1,0 +1,29 @@
+{
+  "branchSystem": {
+    "main": {
+      "accepts": [
+        "release",
+        "hotfix"
+      ]
+    },
+    "develop": {
+      "accepts": [
+        "feature",
+        "bug",
+        "defect",
+        "refactor",
+        "docs",
+        "chore",
+        "test",
+        "performance",
+        "security",
+        "revert"
+      ]
+    },
+    "release": {
+      "accepts": [
+        "develop"
+      ]
+    }
+  }
+}

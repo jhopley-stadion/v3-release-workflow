@@ -9,57 +9,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Label PR based on branch name
-      # This step uses the GitHub Script Action to automatically label the pull request based on the branch name.
-      # The branch name is checked against predefined patterns and appropriate labels are added.
-      # A comment is also posted on the PR listing the added labels.
-      # This works in conjuction with the release drafter categories
-      - name: Label PR based on branch name
-        uses: actions/github-script@v6
+      # Step 1: Checkout the repository to access config file and script
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js (necessary for running the script)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          script: |
-            const branch = context.payload.pull_request.head.ref;
-            let labels = [];
+          node-version: '20'
 
-            // Determine labels based on branch name
-            if (branch.startsWith('feature/')) {
-              labels.push('feature');
-            } else if (branch.startsWith('bug/')) {
-              labels.push('bug');
-            } else if (branch.startsWith('defect/')) {
-              labels.push('defect');
-            } else if (branch.startsWith('hotfix/')) {
-              labels.push('hotfix');
-            } else if (branch.startsWith('release/')) {
-              labels.push('release');
-            } else if (branch.startsWith('chore/')) {
-              labels.push('chore');
-            } else if (branch.startsWith('refactor/')) {
-              labels.push('refactor');
-            } else if (branch.startsWith('test/')) {
-              labels.push('test');
-            } else {
-              labels.push('other');  // Fallback label for any unrecognized branch types
-            }
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install @actions/github
 
-            try {
-              // Add labels to the pull request
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                labels: labels
-              });
-              console.log(`Labels added: ${labels.join(', ')}`);
-
-              // Post a comment on the PR with the added labels
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: `Labels have been added to this PR: ${labels.join(', ')}`
-              });
-              console.log('Comment added to PR');
-            } catch (error) {
-              console.error('Error adding labels or posting comment:', error);
-            }
+      # Step 4: Run the external JavaScript file
+      - name: Run PR labeling script
+        run: node ./workflow-scripts/labeler.workflow.mjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
