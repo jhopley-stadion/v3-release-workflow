@@ -1,7 +1,7 @@
 import fs from 'fs';
 import pkg from '@actions/github';
 
-const { GitHub, context } = pkg;
+const { getOctokit, context } = pkg;  // Use getOctokit instead of GitHub
 
 /**
  * Loads the branch configuration file.
@@ -64,13 +64,13 @@ const determineLabels = (targetBranch, branchType, config) => {
 /**
  * Adds labels to the pull request and posts a comment with the added labels.
  * @param {Object} context - The GitHub Actions context object.
- * @param {Object} github - The GitHub API object.
+ * @param {Object} octokit - The GitHub API client.
  * @param {Array<string>} labels - The labels to add to the PR.
  */
-const addLabelsAndComment = async (context, github, labels) => {
+const addLabelsAndComment = async (context, octokit, labels) => {
   try {
     // Add the determined labels to the pull request
-    await github.rest.issues.addLabels({
+    await octokit.rest.issues.addLabels({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.issue.number,
@@ -79,7 +79,7 @@ const addLabelsAndComment = async (context, github, labels) => {
     console.log(`Labels added: ${labels.join(', ')}`);
 
     // Post a comment on the PR listing the added labels
-    await github.rest.issues.createComment({
+    await octokit.rest.issues.createComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.issue.number,
@@ -95,9 +95,9 @@ const addLabelsAndComment = async (context, github, labels) => {
 /**
  * Main function to handle the PR labeling process.
  * @param {Object} context - The GitHub Actions context object.
- * @param {Object} github - The GitHub API object.
+ * @param {Object} octokit - The GitHub API client.
  */
-const labelPR = async (context, github) => {
+const labelPR = async (context, octokit) => {
   const configPath = '../workflow.config.json';
   
   // Load the configuration file
@@ -116,13 +116,13 @@ const labelPR = async (context, github) => {
   const labels = determineLabels(targetBranch, branchType, config);
   
   // Add the labels to the PR and post a comment with the details
-  await addLabelsAndComment(context, github, labels);
+  await addLabelsAndComment(context, octokit, labels);
 };
 
 // Execute the main labeling function
 const run = async () => {
-  const github = new GitHub(process.env.GITHUB_TOKEN); // Create GitHub API client
-  await labelPR(context, github); // Call the labeling function
+  const octokit = getOctokit(process.env.GITHUB_TOKEN); // Use getOctokit instead of GitHub
+  await labelPR(context, octokit); // Call the labeling function
 };
 
 // Invoke the run function to execute the script
