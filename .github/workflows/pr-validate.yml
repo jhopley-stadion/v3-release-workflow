@@ -22,9 +22,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '20'
 
-      # Step 3: Validate PR source branch against config
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: npm install @actions/github
+
+      # Step 4: Validate PR source branch against config
       - name: Run Branch Validator
         run: node ./workflow-scripts/branch-validator.workflow.mjs
         env:
