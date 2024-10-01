@@ -7,9 +7,12 @@ const GITHUB_TOKEN = process.env.GH_TOKEN;
 async function getOrCreateTag() {
   try {
     console.log("Fetching latest tag...");
-    const { stdout: tagOutput } = await execAsync('gh release list --limit 1 --json tagName --jq \'[0].tagName\'');
+    const { stdout: tagOutput } = await execAsync('gh release list --limit 1 --json tagName --jq \'.[0].tagName\'');
+    
+    // Parse the tag output and remove any surrounding whitespace
     let latest_tag = tagOutput.trim();
 
+    // If no tag was found, create the initial tag
     if (!latest_tag) {
       console.log("No tags found. Setting initial version to 1.0.0");
       latest_tag = "1.0.0";
