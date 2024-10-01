@@ -1,57 +1,31 @@
-name: Prevent PRs that are not release/hotfix to Main branch
+name: Prevent PRs that are not valid to the Target branch
 
 on:
   pull_request:
     branches:
       - main
+      - develop
+      - release
     types: [opened, edited, synchronize]
 
 jobs:
-  check-pr:
+  validate-pr:
+    name: Validate PR Branches
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
-      # This step checks out the code from the repository so that the workflow can access it for the PR checks.
+      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Check PR branch names
-      # This step checks if the source branch of the PR follows the naming conventions (i.e., starts with `hotfix/` or `release/`).
-      # If the branch name does not follow the conventions, it logs an error, posts a comment on the PR, and optionally closes the PR.
-      - name: Check PR branch names
-        run: |
-          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
-          SOURCE_BRANCH="${{ github.head_ref }}"
-          
-          if [ "$BASE_BRANCH" == "main" ]; then
-            if [[ ! "$SOURCE_BRANCH" =~ ^(hotfix/|release/) ]]; then
-              # Log error for the "Checks" tab
-              echo "::error::The source branch '$SOURCE_BRANCH' does not follow the naming conventions."
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
-              # Add a PR comment with a detailed error message
-              echo "Posting comment to PR #${{ github.event.pull_request.number }}"
-              gh pr comment ${{ github.event.pull_request.number }} \
-                -b ":x: **This PR cannot be merged into the \`main\` branch.** Only branches that start with \`hotfix/\` or \`release/\` are allowed. The current source branch is: \`$SOURCE_BRANCH\`."
-
-              # Optionally close the PR
-              echo "Closing PR #${{ github.event.pull_request.number }}"
-              gh pr close ${{ github.event.pull_request.number }}
-              
-              # Fail the job to prevent merge
-              exit 1
-            else
-              echo "The PR source branch follows the naming conventions."
-            fi
-          else
-            echo "Base branch is not \`main\`, no action needed."
-          fi
+      # Step 3: Validate PR source branch against config
+      - name: Run Branch Validator
+        run: node ./workflow-scripts/branch-validator.workflow.mjs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the built-in token for GitHub CLI authentication
-
-      # Step 3: Verify GitHub CLI Authentication
-      # This step verifies that the GitHub CLI is authenticated correctly using the provided GH_TOKEN.
-      - name: Verify GitHub CLI Authentication
-        run: gh auth status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure GH_TOKEN is set correctly
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub token for authentication
