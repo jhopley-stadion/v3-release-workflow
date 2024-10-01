@@ -4,7 +4,6 @@ import { CONFIG_PATH } from './constants.workflow.mjs';
 
 const { getOctokit, context } = pkg;  // Use getOctokit instead of GitHub
 
-
 /**
  * Extracts the branch type from the source branch name.
  * @param {string} sourceBranch - The full source branch name (e.g., "feature/new-feature").
@@ -79,14 +78,14 @@ const addLabelsAndComment = async (context, octokit, labels) => {
       issue_number: context.issue.number,
       labels
     });
-    console.log(`Labels added: ${labels.join(', ')}`);
+    console.log(`✅ Labels added: ${labels.join(', ')}`);
 
     // Post a comment on the PR listing the added labels
     await octokit.rest.issues.createComment({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.issue.number,
-      body: `Labels have been added to this PR based on the branch type: ${labels.join(', ')}`
+      body: `✅ Labels have been added to this PR based on the branch type: ${labels.join(', ')}`
     });
     console.log('Comment added to PR');
   } catch (error) {
