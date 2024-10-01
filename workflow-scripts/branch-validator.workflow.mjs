@@ -92,7 +92,7 @@ const handleValidBranch = async (context, octokit, sourceBranch) => {
  * @param {Object} octokit - The GitHub API client.
  */
 const validatePR = async (context, octokit) => {
-  const configPath = './workflow.config.json';
+  const configPath = './workflow.config.json'; // Ensure this path is correct
   
   const config = loadConfig(configPath);
   const targetBranch = context.payload.pull_request.base.ref;
