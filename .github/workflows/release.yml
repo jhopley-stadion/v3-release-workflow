@@ -43,6 +43,7 @@ jobs:
         env:
           latest_tag: ${{ env.latest_tag }}
           branch_type: ${{ env.branch_type }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}  
 
       # Step 5: Draft release notes
       - name: Draft Release Notes
