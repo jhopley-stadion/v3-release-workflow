@@ -1,7 +1,7 @@
 import pkg from '@actions/github';
 import {
   loadConfig
-} from './untils.workflow.mjs';
+} from './utils.workflow.mjs';
 import { CONFIG_PATH } from './constants.workflow.mjs';
 
 const {
