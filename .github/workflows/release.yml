@@ -20,8 +20,25 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      
+      # Step 2: Set up Node.js
+      # This step sets up Node.js to run the script for generating Release Drafter configurations.
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
-      # Step 2: Get latest tag or create initial tag
+      # Step 3: Install dependencies
+      # This step installs any necessary dependencies for the script.
+      - name: Install dependencies
+        run: npm install
+
+      # Step 4: Generate Release Drafter Configurations
+      # This step executes the script to generate Release Drafter configuration files based on the provided config.
+      - name: Generate Release Drafter Configurations
+        run: node ./workflow-scripts/generate-release-drafters.workflow.mjs
+
+      # Step 5: Get latest tag or create initial tag
       # This step fetches the latest tag from the repository. If no tags are found, it creates and pushes the initial tag (1.0.0).
       - name: Get latest tag or create initial tag
         id: get_or_create_tag
@@ -53,7 +70,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Determine branch type and select configuration file
+      # Step 6: Determine branch type and select configuration file
       # This step extracts the branch name from the commit message, determines the branch type (release or hotfix), 
       # and selects the appropriate Release Drafter configuration file.
       - name: Determine branch type and config
@@ -86,7 +103,7 @@ jobs:
           echo "branch_type=$branch_type" >> $GITHUB_ENV
           echo "config_file=$config_file" >> $GITHUB_ENV
 
-      # Step 4: Increment version based on branch type
+      # Step 7: Increment version based on branch type
       # This step increments the version based on the branch type. For a release branch, it increments the minor version and resets the patch to 0.
       # For a hotfix branch, it increments the patch version.
       - name: Increment version
@@ -126,7 +143,7 @@ jobs:
           latest_tag: ${{ env.latest_tag }}
           branch_type: ${{ env.branch_type }}
 
-      # Step 5: Draft release notes
+      # Step 8: Draft release notes
       # This step uses Release Drafter to draft release notes based on the branch type and the selected configuration file.
       - name: Draft Release Notes
         uses: release-drafter/release-drafter@v5
@@ -135,7 +152,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 6: Publish the release
+      # Step 9: Publish the release
       # This step publishes the release by updating the existing draft with the new tag name.
       - name: Publish Release
         id: publish_release
@@ -150,7 +167,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           new_tag: ${{ env.new_tag }}
 
-      # Step 7: Rebase develop with main for hotfixes
+      # Step 10: Rebase develop with main for hotfixes
       # If the branch type is hotfix, this step rebases the develop branch with changes from the main branch.
       - name: Rebase develop with main for hotfixes
         if: env.branch_type == 'hotfix'

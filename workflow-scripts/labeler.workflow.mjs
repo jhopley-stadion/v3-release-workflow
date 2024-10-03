@@ -1,5 +1,5 @@
 import pkg from '@actions/github';
-import { loadConfig } from './untils.workflow.mjs'; 
+import { loadConfig } from './utils.workflow.mjs'; 
 import { CONFIG_PATH } from './constants.workflow.mjs';
 
 const { getOctokit, context } = pkg;  // Use getOctokit instead of GitHub

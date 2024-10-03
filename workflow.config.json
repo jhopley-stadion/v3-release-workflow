@@ -26,5 +26,88 @@
         "develop"
       ]
     }
+  },
+  "drafterSettings": {
+    "minor": {
+      "file-name": "release-drafter-minor.yml",
+      "name-template": "Release {version}",
+      "tag-template": "_DRAFT_",
+      "categories": [
+        {
+          "title": "New Features & Enhancements 🎉",
+          "branchTypes": [
+            "feature"
+          ]
+        },
+        {
+          "title": "Bug Fixes & Issue Resolutions 🐛",
+          "branchTypes": [
+            "fix",
+            "bug"
+          ]
+        },
+        {
+          "title": "Defect Fixes 🔧",
+          "branchTypes": [
+            "defect"
+          ]
+        },
+        {
+          "title": "Chores & Maintenance 🧹",
+          "branchTypes": [
+            "chore"
+          ]
+        },
+        {
+          "title": "Performance Improvements ⚡",
+          "branchTypes": [
+            "performance"
+          ]
+        },
+        {
+          "title": "Code Refactoring 🔄",
+          "branchTypes": [
+            "refactor"
+          ]
+        },
+        {
+          "title": "Security Enhancements 🔒",
+          "branchTypes": [
+            "security"
+          ]
+        },
+        {
+          "title": "Documentation Updates 📚",
+          "branchTypes": [
+            "docs"
+          ]
+        },
+        {
+          "title": "Test Improvements 🧪",
+          "branchTypes": [
+            "test"
+          ]
+        },
+        {
+          "title": "Reverted Changes ↩️",
+          "branchTypes": [
+            "revert"
+          ]
+        }
+      ]
+    },
+    "patch": {
+      "file-name": "release-drafter-patch.yml",
+      "name-template": "Patch Release {version}",
+      "tag-template": "_DRAFT_PATCH_",
+      "categories": [
+        {
+          "title": "Hotfixes 🔥",
+          "branchTypes": [
+            "hotfix"
+          ]
+        }
+      ]
+    }
   }
 }
