@@ -5,8 +5,7 @@ on:
     branches:
       - main
       - develop
-      - release
-    types: [opened, edited, synchronize]
+    types: [opened]
 
 jobs:
   validate-pr:
