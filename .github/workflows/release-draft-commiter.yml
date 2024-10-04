@@ -1,0 +1,61 @@
+name: Create Release
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - main
+
+permissions:
+  contents: write  
+  issues: read    
+  deployments: write 
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # Step 3: Generate Release Drafter Configurations
+      - name: Generate Release Drafter Configurations
+        run: node ./workflow-scripts/generate-release-drafters.workflow.mjs
+
+      - name: Wait for configuration files
+        run: sleep 5
+
+      - name: Ensure Release Drafter Configs are Created
+        run: |
+          if [[ ! -f ".github/release-drafter-minor.yml" ]]; then
+            echo "Config file .github/release-drafter-minor.yml not found."
+            exit 1
+          else
+            echo "Config file found. Proceeding..."
+          fi
+
+      - name: Commit Generated Configurations
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email "actions@github.com"
+          git add .github/release-drafter-minor.yml .github/release-drafter-patch.yml || exit 0
+          git diff --cached --quiet || git commit -m "Add generated Release Drafter configurations"
+          git push
+
+      # Step 5: Add a comment to the pull request
+      - name: Comment on Pull Request
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          COMMENT="Release Drafter configurations have been generated and committed successfully."
+          gh pr comment $PR_NUMBER --body "$COMMENT"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
