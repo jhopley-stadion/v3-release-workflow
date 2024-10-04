@@ -33,6 +33,18 @@ jobs:
       - name: Generate Release Drafter Configurations
         run: node ./workflow-scripts/generate-release-drafters.workflow.mjs
 
+      - name: Wait for configuration files
+        run: sleep 20
+
+      - name: Ensure Release Drafter Configs are Created
+        run: |
+          if [[ ! -f ".github/release-drafter-minor.yml" ]]; then
+            echo "Config file .github/release-drafter-minor.yml not found."
+            exit 1
+          else
+            echo "Config file found. Proceeding..."
+          fi
+
       # Step 4: Get latest tag or create initial tag
       # This step fetches the latest tag from the repository. If no tags are found, it creates and pushes the initial tag (1.0.0).
       - name: Get latest tag or create initial tag
