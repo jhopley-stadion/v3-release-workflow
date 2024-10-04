@@ -34,7 +34,7 @@ jobs:
         run: node ./workflow-scripts/generate-release-drafters.workflow.mjs
 
       - name: Wait for configuration files
-        run: sleep 20
+        run: sleep 5
 
       - name: Ensure Release Drafter Configs are Created
         run: |
@@ -44,6 +44,15 @@ jobs:
           else
             echo "Config file found. Proceeding..."
           fi
+
+       
+      - name: Commit Generated Configurations
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email "actions@github.com"
+          git add .github/release-drafter-minor.yml .github/release-drafter-patch.yml
+          git commit -m "Add generated Release Drafter configurations"
+          git push   
 
       # Step 4: Get latest tag or create initial tag
       # This step fetches the latest tag from the repository. If no tags are found, it creates and pushes the initial tag (1.0.0).
