@@ -67,6 +67,6 @@ jobs:
         if: env.file_changed == 'true'
         run: |
           gh pr comment ${{ github.event.pull_request.number }} \
-            --body "Release Drafter configurations have been updated and committed to the branch."
+            --body 🤖 ✅ **Release Drafter** configurations have been updated and committed to the branch."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
