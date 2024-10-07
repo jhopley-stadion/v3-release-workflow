@@ -64,9 +64,7 @@
         },
         {
           "title": "Code Refactoring 🔄",
-          "branchTypes": [
-            "refactor"
-          ]
+          "branchTypes": ["refactor"]
         },
         {
           "title": "Security Enhancements 🔒",
