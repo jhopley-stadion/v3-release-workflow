@@ -3,6 +3,8 @@ name: Check PR for workflow.config.json changes
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches:
+      - main
 
 permissions:
   contents: write # Allows pushing commits
