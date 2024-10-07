@@ -1,0 +1,72 @@
+name: Check PR for workflow.config.json changes
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  contents: write # Allows pushing commits
+  pull-requests: write # Allows posting comments on the PR
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the PR branch
+      - name: Checkout the PR branch
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      # Confirm that the correct branch is checked out
+      - name: Verify current branch
+        run: git branch --show-current
+
+      # Check if the workflow.config.json file has changed
+      - name: Check if workflow.config.json has been modified
+        id: config-check
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          if git diff --name-only origin/${{ github.base_ref }} -- | grep -q '^workflow.config.json$'; then
+            echo "file_changed=true" >> $GITHUB_ENV
+          else
+            echo "file_changed=false" >> $GITHUB_ENV
+          fi
+
+      # Run the script only if workflow.config.json has been changed
+      - name: Generate Release Drafter Configurations
+        if: env.file_changed == 'true'
+        run: |
+          echo "Running script on branch $(git branch --show-current)"
+          pwd # Print the current working directory
+          ls -l # List files in the working directory for debugging
+          node ./workflow-scripts/generate-release-drafters.workflow.mjs
+
+      # Check for file changes after running the script
+      - name: Check for file changes (git status)
+        if: env.file_changed == 'true'
+        run: git status
+
+      # Add, commit, and push changes back to the PR branch if workflow.config.json has changed
+      - name: Commit and Push changes
+        if: env.file_changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required for authentication
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update release-drafter configurations" || echo "Nothing to commit"
+          git push origin ${{ github.head_ref }} || echo "No changes to push"
+      
+          # Add a comment to the PR when changes are committed and pushed
+      - name: Comment on PR
+        if: env.file_changed == 'true'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "🤖 ✅ **Release Drafter** configurations have been updated and committed to the branch."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

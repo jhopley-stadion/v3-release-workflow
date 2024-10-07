@@ -42,8 +42,7 @@
         {
           "title": "Bug Fixes & Issue Resolutions 🐛",
           "branchTypes": [
-            "fix",
-            "bug"
+            "fix"
           ]
         },
         {
@@ -54,9 +53,7 @@
         },
         {
           "title": "Chores & Maintenance 🧹",
-          "branchTypes": [
-            "chore"
-          ]
+          "branchTypes": ["chore"]
         },
         {
           "title": "Performance Improvements ⚡",
@@ -66,9 +63,7 @@
         },
         {
           "title": "Code Refactoring 🔄",
-          "branchTypes": [
-            "refactor"
-          ]
+          "branchTypes": ["refactor"]
         },
         {
           "title": "Security Enhancements 🔒",
@@ -99,7 +94,7 @@
     "patch": {
       "file-name": "release-drafter-patch.yml",
       "name-template": "Patch Release {version}",
-      "tag-template": "_DRAFT_PATCH_",
+      "tag-template": "_DRAFT_",
       "categories": [
         {
           "title": "Hotfixes 🔥",
