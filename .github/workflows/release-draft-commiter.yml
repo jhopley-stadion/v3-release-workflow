@@ -18,6 +18,10 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
+      # Confirm that the correct branch is checked out
+      - name: Verify current branch
+        run: git branch --show-current
+
       # Check if the workflow.config.json file has changed
       - name: Check if workflow.config.json has been modified
         id: config-check
@@ -32,7 +36,16 @@ jobs:
       # Run the script only if workflow.config.json has been changed
       - name: Generate Release Drafter Configurations
         if: env.file_changed == 'true'
-        run: node ./workflow-scripts/generate-release-drafters.workflow.mjs
+        run: |
+          echo "Running script on branch $(git branch --show-current)"
+          pwd # Print the current working directory
+          ls -l # List files in the working directory for debugging
+          node ./workflow-scripts/generate-release-drafters.workflow.mjs
+
+      # Check for file changes after running the script
+      - name: Check for file changes (git status)
+        if: env.file_changed == 'true'
+        run: git status
 
       # Add, commit, and push changes back to the PR branch if workflow.config.json has changed
       - name: Commit and Push changes
