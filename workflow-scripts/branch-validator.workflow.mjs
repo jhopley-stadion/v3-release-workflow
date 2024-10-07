@@ -39,7 +39,7 @@ const handleInvalidBranch = async (context, octokit, sourceBranch) => {
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.issue.number,
-      body: `:x: **This PR cannot be merged into \`${context.payload.pull_request.base.ref}\`.**
+      body: `🤖 ❌ **This PR cannot be merged into \`${context.payload.pull_request.base.ref}\`.**
             Only branches starting with the allowed types are accepted. The current source branch is: \`${sourceBranch}\`.`
     });
     console.log(`Posted comment on PR #${context.issue.number}`);
@@ -70,7 +70,7 @@ const handleValidBranch = async (context, octokit, sourceBranch) => {
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: context.issue.number,
-      body: `✅ **This PR is valid!** The source branch \`${sourceBranch}\` follows the allowed conventions for merging into \`${context.payload.pull_request.base.ref}\`.`
+      body: `🤖 ✅ **This PR is valid!** The source branch \`${sourceBranch}\` follows the allowed conventions for merging into \`${context.payload.pull_request.base.ref}\`.`
     });
     console.log(`Posted success comment on PR #${context.issue.number}`);
   } catch (error) {
