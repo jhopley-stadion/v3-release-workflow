@@ -3,6 +3,9 @@ name: Auto Label PR Based on Branch Type
 on:
   pull_request:
     types: [opened, synchronize]
+    branches:
+      - develop
+      - main
 
 jobs:
   label-pr:
