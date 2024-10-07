@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write # Allows pushing commits
+  pull-requests: write # Allows posting comments on the PR
 
 jobs:
   check-and-update:
@@ -60,3 +61,12 @@ jobs:
           git add .
           git commit -m "Update release-drafter configurations"
           git push origin ${{ github.head_ref }}
+
+      # Add a comment to the PR when changes are committed and pushed
+      - name: Comment on PR
+        if: env.file_changed == 'true'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body "✅ **Release Drafter** configurations have been updated and committed to the branch."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
