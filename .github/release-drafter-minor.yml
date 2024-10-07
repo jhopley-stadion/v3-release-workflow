@@ -13,7 +13,7 @@ categories:
   - title: New Features & Enhancements 🎉
     labels: ["feature"]
   - title: Bug Fixes & Issue Resolutions 🐛
-    labels: ["fix","bug"]
+    labels: ["fix"]
   - title: Defect Fixes 🔧
     labels: ["defect"]
   - title: Chores & Maintenance 🧹
