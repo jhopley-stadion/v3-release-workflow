@@ -59,14 +59,14 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Update release-drafter configurations"
-          git push origin ${{ github.head_ref }}
+          git commit -m "Update release-drafter configurations" || echo "Nothing to commit"
+          git push origin ${{ github.head_ref }} || echo "No changes to push"
 
       # Add a comment to the PR when changes are committed and pushed
       - name: Comment on PR
         if: env.file_changed == 'true'
         run: |
           gh pr comment ${{ github.event.pull_request.number }} \
-            --body "✅ **Release Drafter** configurations have been updated and committed to the branch."
+            --body "Release Drafter configurations have been updated and committed to the branch."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
