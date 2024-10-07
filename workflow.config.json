@@ -54,9 +54,7 @@
         },
         {
           "title": "Chores & Maintenance 🧹",
-          "branchTypes": [
-            "chore"
-          ]
+          "branchTypes": ["chore"]
         },
         {
           "title": "Performance Improvements ⚡",
