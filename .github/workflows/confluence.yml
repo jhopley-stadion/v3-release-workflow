@@ -85,11 +85,12 @@ jobs:
 
           # Check if the page ID was found
           if [ "$pageId" == "null" ]; then
-            echo "Page not found"
-            exit 1
+            echo "Warning: Page not found for title '$pageTitle'. Proceeding without it."
+            echo "confluencePageId=none" >> $GITHUB_ENV
+          else
+            echo "confluencePageId=$pageId" >> $GITHUB_ENV
           fi
 
-          echo "confluencePageId=$pageId" >> $GITHUB_ENV
 
       # Step 6: Construct the full URL for the Confluence page
       - name: Construct Confluence URL
