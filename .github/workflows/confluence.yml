@@ -74,8 +74,14 @@ jobs:
           # Construct the page title
           pageTitle="Release v${{ env.latest_tag }}"
 
+          # Construct the request URL
+          requestUrl="${{ env.confluenceBaseUrl }}/wiki/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id"
+          
+          # Log the request URL for debugging
+          echo "Making GET request to: $requestUrl"
+
           # Make a GET request to fetch the page details by title
-          response=$(curl -s -u ${{ env.atlassianUserName }}:${{ secrets.ATLASSIAN_API_TOKEN }} "${{ env.confluenceBaseUrl }}/wiki/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id")
+          response=$(curl -s -u ${{ env.atlassianUserName }}:${{ secrets.ATLASSIAN_API_TOKEN }} "$requestUrl")
 
           # Check for curl error
           if [ $? -ne 0 ]; then
