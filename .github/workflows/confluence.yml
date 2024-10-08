@@ -73,9 +73,10 @@ jobs:
         run: |
           # Construct the page title
           pageTitle="Release v${{ env.latest_tag }}"
+
           # Construct the request URL
-          requestUrl="${{ env.confluenceBaseUrl }}/wiki/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id"
-          
+          requestUrl="https://stadion.atlassian.net/wiki/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id"
+
           # Log the request URL for debugging
           echo "Making GET request to: $requestUrl"
 
@@ -88,22 +89,36 @@ jobs:
             exit 1
           fi
 
-          # Debugging: Print the response
-          echo "Response: $response"
+          # Debugging: Print the raw response
+          echo "Raw response: $response"
 
-          # Log the full response message for debugging
-          echo "Full response from Confluence API: $response" 
+          # Check if the response contains an error message
+          errorMsg=$(echo "$response" | jq -r '.message // empty')
+          if [ -n "$errorMsg" ]; then
+            echo "Error from Confluence API: $errorMsg"
+            exit 1
+          fi
+
+          # Check for results in the response
+          results=$(echo "$response" | jq -r '.results | length')
+          if [ "$results" -eq 0 ]; then
+            echo "Warning: No pages found for title '$pageTitle'."
+            echo "confluencePageId=none" >> $GITHUB_ENV
+            exit 0
+          fi
 
           # Extract the page ID from the response
           pageId=$(echo "$response" | jq -r '.results[0].id')
 
           # Check if the page ID was found
-          if [ "$pageId" == "null" ]; then
+          if [ "$pageId" == "null" ] || [ -z "$pageId" ]; then
             echo "Warning: Page not found for title '$pageTitle'. Proceeding without it."
             echo "confluencePageId=none" >> $GITHUB_ENV
           else
+            echo "Page ID found: $pageId"
             echo "confluencePageId=$pageId" >> $GITHUB_ENV
           fi
+
 
       # Step 6: Construct the full URL for the Confluence page
       - name: Construct Confluence URL
