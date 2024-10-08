@@ -72,9 +72,9 @@ jobs:
         run: |
           # Construct the page title
           pageTitle="Release v1.18.9"
-        
-          # URL-encode the page title
-          encodedPageTitle=$(echo "$pageTitle" | jq -sRr @uri)
+          
+          # Replace spaces with +
+          encodedPageTitle="${pageTitle// /+}"
       
           # Construct the request URL
           requestUrl="https://stadion.atlassian.net/wiki/rest/api/content?spaceKey=testspace&title=${encodedPageTitle}&expand=id"
