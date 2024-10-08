@@ -80,51 +80,10 @@ jobs:
           # Log the request URL for debugging
           echo "Making GET request to: $requestUrl"
 
-          # Log token
-          echo "Token: ${{ secrets.ATLASSIAN_API_TOKEN }}"
-
           # Make a GET request to fetch the page details by title
-          response=$(curl -s -u "john@stadion.io:${{ secrets.ATLASSIAN_API_TOKEN }}" "$requestUrl")
-
-          # Check for curl error
-          if [ $? -ne 0 ]; then
-              echo "Error: Failed to make the GET request to Confluence API."
-              exit 1
-          fi
-
-          # Debugging: Print the raw response
-          echo "Raw response: $response"
-
-          # Check if the response contains an error message
-          errorMsg=$(echo "$response" | jq -r '.message // empty')
-          if [ -n "$errorMsg" ]; then
-              echo "Error from Confluence API: $errorMsg"
-              exit 1
-          fi
-
-          # Check for results in the response
-          results=$(echo "$response" | jq -r '.results | length')
-          if [ "$results" -eq 0 ]; then
-              echo "Warning: No pages found for title '$pageTitle'."
-              echo "confluencePageId=none" >> $GITHUB_ENV
-              exit 0
-          fi
-
-          # Extract the page ID from the response
-          pageId=$(echo "$response" | jq -r '.results[0].id')
-
-          # Check if the page ID was found
-          if [ "$pageId" == "null" ] || [ -z "$pageId" ]; then
-              echo "Warning: Page not found for title '$pageTitle'. Proceeding without it."
-              echo "confluencePageId=none" >> $GITHUB_ENV
-          else
-              echo "Page ID found: $pageId"
-              echo "confluencePageId=$pageId" >> $GITHUB_ENV
-
-              # Extract the URL from the response
-              pageUrl=$(echo "$response" | jq -r '._links.webui')
-              echo "Page URL: https://stadion.atlassian.net$pageUrl"
-          fi
+          response=$(curl -u "john@stadion.io:${{ secrets.ATLASSIAN_API_TOKEN }}" "$requestUrl")
+          
+          echo "Response: $response"
 
       # Step 6: Construct the full URL for the Confluence page
       - name: Construct Confluence URL
@@ -140,13 +99,13 @@ jobs:
           channel-id: ${{ env.slackChannel }}
           payload: |
             {
-              "text": "Release notes for version ${latest_tag} have been published to Confluence. :rocket:",
+              "text": "Release notes for version ${{ env.latest_tag }} have been published to Confluence. :rocket:",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Release v${latest_tag}* has been published."
+                    "text": "*Release v${{ env.latest_tag }}* has been published."
                   }
                 },
                 {
@@ -158,7 +117,7 @@ jobs:
                         "type": "plain_text",
                         "text": "View GitHub Release"
                       },
-                      "url": "https://github.com/${{ github.repository }}/releases/tag/${latest_tag}"
+                      "url": "https://github.com/${{ github.repository }}/releases/tag/${{ env.latest_tag }}"
                     },
                     {
                       "type": "button",
@@ -166,7 +125,7 @@ jobs:
                         "type": "plain_text",
                         "text": "View JIRA Release"
                       },
-                      "url": "${{ env.jiraBaseUrl }}/projects/${{ env.jiraProjectKey }}/releases/${latest_tag}"
+                      "url": "${{ env.jiraBaseUrl }}/projects/${{ env.jiraProjectKey }}/releases/${{ env.latest_tag }}"
                     },
                     {
                       "type": "button",
