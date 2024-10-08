@@ -1,58 +1,64 @@
-name: Create Confluence Release Notes
+name: Release Workflow
+
 on:
-  workflow_run:
-    workflows: ["Create Release"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
+      - develop
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout code
-      - name: Checkout code
-        uses: actions/checkout@v2
+    # Step 1: Checkout the repository
+    - name: Checkout
+      uses: actions/checkout@v3
 
-      # Step 2: Read and export JSON config values directly as environment variables
-      - name: Load config from JSON
-        id: load_config
-        run: |
-          # Extract and export the required Confluence settings directly
-          export confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
-          export confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
-          export atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' workflow.config.json)
-          export folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Step 2: Fetch the latest tag
+    - name: Fetch the latest tag
+      run: |
+        latest_tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
 
-      # Step 3: Fetch release notes (explicitly pass GH_TOKEN)
-      - name: Fetch release notes
-        id: fetch_release_notes
-        run: |
-          # Fetch the latest tag
-          latest_tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+        # Fetch the release notes
+        release_notes=$(gh release view $latest_tag --json body --jq '.body')
 
-          # Fetch the release notes
-          release_notes=$(gh release view $latest_tag --json body --jq '.body')
+        # Create a 'docs' folder if it doesn't exist
+        mkdir -p docs
 
-          # Create a 'docs' folder if it doesn't exist
-          mkdir -p docs
-          
-          # Save the release notes with the version number in the file name
-          echo "${release_notes}" > "docs/Release v${latest_tag}.md"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure GH_TOKEN is set here
+        # Save the release notes with the version number in the file name
+        echo "${release_notes}" > "docs/Release v${latest_tag}.md"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 4: Ensure correct permissions for the docs folder and files
-      - name: Set permissions for docs folder
-        run: chmod -R 755 docs
+    # Step 3: Load config from JSON and set environment variables
+    - name: Load config from JSON
+      id: load_config
+      run: |
+        # Extract and export the required Confluence settings directly
+        confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
+        confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
+        atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' workflow.config.json)
+        folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
+        
+        # Debugging: Print extracted values
+        echo "Confluence Base URL: $confluenceBaseUrl"
+        echo "Confluence Parent ID: $confluenceParentId"
+        echo "Atlassian Username: $atlassianUserName"
+        echo "Folder to Publish: $folderToPublish"
 
-      # Step 5: Publish Markdown to Confluence using exported environment variables
-      - name: Publish Markdown to Confluence
-        uses: markdown-confluence/publish-action@v5
-        with:
-          confluenceBaseUrl: ${{ env.confluenceBaseUrl }}
-          confluenceParentId: ${{ env.confluenceParentId }}
-          atlassianUserName: ${{ env.atlassianUserName }}
-          atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
-          folderToPublish: ${{ env.folderToPublish }}
+        # Export the values to the environment for the next steps
+        echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
+        echo "confluenceParentId=$confluenceParentId" >> $GITHUB_ENV
+        echo "atlassianUserName=$atlassianUserName" >> $GITHUB_ENV
+        echo "folderToPublish=$folderToPublish" >> $GITHUB_ENV
+
+    # Step 4: Publish Markdown to Confluence
+    - name: Publish Markdown to Confluence
+      uses: markdown-confluence/publish-action@v5
+      with:
+        confluenceBaseUrl: ${{ env.confluenceBaseUrl }}
+        confluenceParentId: ${{ env.confluenceParentId }}
+        atlassianUserName: ${{ env.atlassianUserName }}
+        atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
+        folderToPublish: ${{ env.folderToPublish }}
