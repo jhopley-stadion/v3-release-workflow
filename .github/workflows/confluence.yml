@@ -38,6 +38,7 @@ jobs:
       run: |
         confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
         confluenceSpaceName=$(jq -r '.confluenceSettings.spaceName' workflow.config.json)
+        confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
         atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' workflow.config.json)
         folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
         jiraBaseUrl=$(jq -r '.jiraSettings.jiraBaseUrl' workflow.config.json)
@@ -47,6 +48,8 @@ jobs:
         # Export the values to the environment for the next steps
         echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
         echo "confluenceSpaceName=$confluenceSpaceName" >> $GITHUB_ENV
+        echo "confluenceParentId=$confluenceParentId" >> $GITHUB_ENV
+
         echo "atlassianUserName=$atlassianUserName" >> $GITHUB_ENV
         echo "folderToPublish=$folderToPublish" >> $GITHUB_ENV
         echo "jiraBaseUrl=$jiraBaseUrl" >> $GITHUB_ENV
@@ -59,7 +62,7 @@ jobs:
       uses: markdown-confluence/publish-action@v5
       with:
         confluenceBaseUrl: ${{ env.confluenceBaseUrl }}
-        confluenceParentId: ${{ secrets.CONFLUENCE_PARENT_ID }} # You may need to replace this with the actual parent ID
+        confluenceParentId: ${{ env.confluenceParentId }} # You may need to replace this with the actual parent ID
         atlassianUserName: ${{ env.atlassianUserName }}
         atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
         folderToPublish: ${{ env.folderToPublish }}
