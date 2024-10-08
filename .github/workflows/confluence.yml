@@ -18,10 +18,10 @@ jobs:
         id: load_config
         run: |
           # Extract and export the required Confluence settings directly
-          export confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' config.json)
-          export confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' config.json)
-          export atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' config.json)
-          export folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' config.json)
+          export confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
+          export confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
+          export atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' workflow.config.json)
+          export folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
