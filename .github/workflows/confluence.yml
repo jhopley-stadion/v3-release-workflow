@@ -22,11 +22,10 @@ jobs:
           export confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' config.json)
           export atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' config.json)
           export folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' config.json)
-
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Fetch release notes
+      # Step 3: Fetch release notes (explicitly pass GH_TOKEN)
       - name: Fetch release notes
         id: fetch_release_notes
         run: |
@@ -41,6 +40,8 @@ jobs:
           
           # Save the release notes with the version number in the file name
           echo "${release_notes}" > "docs/Release v${latest_tag}.md"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ensure GH_TOKEN is set here
 
       # Step 4: Ensure correct permissions for the docs folder and files
       - name: Set permissions for docs folder
