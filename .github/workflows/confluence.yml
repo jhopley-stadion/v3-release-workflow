@@ -96,16 +96,16 @@ jobs:
             echo "Error: WebUI link not found."
             exit 1
           fi
-      
+    
           # Save the webui link to an environment variable
-          echo "confluencePageUrl=${{ env.confluenceBaseUrl }}${webuiLink}" >> $GITHUB_ENV
+          echo "confluencePageUrl=${{ env.confluenceBaseUrl }}/wiki${webuiLink}" >> $GITHUB_ENV
       
       # Step 6: Construct the full URL for the Confluence page (already done above)
       - name: Construct Confluence URL
         id: construct_url
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
-      
+    
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
