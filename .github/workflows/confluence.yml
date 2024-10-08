@@ -80,6 +80,9 @@ jobs:
           # Debugging: Print the response
           echo "Response: $response"
 
+          # Log the full response message for debugging
+          echo "Full response from Confluence API: $response" 
+
           # Extract the page ID from the response
           pageId=$(echo "$response" | jq -r '.results[0].id')
 
@@ -90,7 +93,6 @@ jobs:
           else
             echo "confluencePageId=$pageId" >> $GITHUB_ENV
           fi
-
 
       # Step 6: Construct the full URL for the Confluence page
       - name: Construct Confluence URL
