@@ -80,16 +80,19 @@ jobs:
           # Debugging: Print the response
           echo "Response: $response"
 
+          # Log the full response message for debugging
+          echo "Full response from Confluence API: $response" 
+
           # Extract the page ID from the response
           pageId=$(echo "$response" | jq -r '.results[0].id')
 
           # Check if the page ID was found
           if [ "$pageId" == "null" ]; then
-            echo "Page not found"
-            exit 1
+            echo "Warning: Page not found for title '$pageTitle'. Proceeding without it."
+            echo "confluencePageId=none" >> $GITHUB_ENV
+          else
+            echo "confluencePageId=$pageId" >> $GITHUB_ENV
           fi
-
-          echo "confluencePageId=$pageId" >> $GITHUB_ENV
 
       # Step 6: Construct the full URL for the Confluence page
       - name: Construct Confluence URL
