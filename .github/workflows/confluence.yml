@@ -67,29 +67,30 @@ jobs:
         atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
         folderToPublish: ${{ env.folderToPublish }}
 
-    # Step 5: Get the page ID of the recently created page
-    - name: Get Confluence page ID
-      id: get_page_id
-      run: |
-        # Construct the page title
-        pageTitle="Release v${{ env.latest_tag }}"
+      # Step 5: Get the page ID of the recently created page
+      - name: Get Confluence page ID
+        id: get_page_id
+        run: |
+          # Construct the page title
+          pageTitle="Release v${{ env.latest_tag }}"
 
-        # Make a GET request to fetch the page details by title
-        response=$(curl -s -u ${{ env.atlassianUserName }}:${{ secrets.ATLASSIAN_API_TOKEN }} "${{ env.confluenceBaseUrl }}/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id")
+          # Make a GET request to fetch the page details by title
+          response=$(curl -s -u ${{ env.atlassianUserName }}:${{ secrets.ATLASSIAN_API_TOKEN }} "${{ env.confluenceBaseUrl }}/wiki/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id")
 
-        # Debugging: Print the response
-        echo "Response: $response"
+          # Debugging: Print the response
+          echo "Response: $response"
 
-        # Extract the page ID from the response
-        pageId=$(echo "$response" | jq -r '.results[0].id')
+          # Extract the page ID from the response
+          pageId=$(echo "$response" | jq -r '.results[0].id')
 
-        # Check if the page ID was found
-        if [ "$pageId" == "null" ]; then
-          echo "Page not found"
-          exit 1
-        fi
+          # Check if the page ID was found
+          if [ "$pageId" == "null" ]; then
+            echo "Page not found"
+            exit 1
+          fi
 
-        echo "confluencePageId=$pageId" >> $GITHUB_ENV
+          echo "confluencePageId=$pageId" >> $GITHUB_ENV
+
 
     # Step 6: Construct the full URL for the Confluence page
     - name: Construct Confluence URL
