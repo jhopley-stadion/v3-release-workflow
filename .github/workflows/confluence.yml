@@ -67,24 +67,27 @@ jobs:
           atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
           folderToPublish: ${{ env.folderToPublish }}
 
-      # Step 5: Get the page ID of the recently created page
       - name: Get Confluence page ID
         id: get_page_id
         run: |
           # Construct the page title
           pageTitle="Release v1.18.9"
-
+          
+          # URL-encode the page title
+          encodedPageTitle=$(echo "$pageTitle" | jq -sRr @uri)
+      
           # Construct the request URL
-          requestUrl="https://stadion.atlassian.net/wiki/rest/api/content?spaceKey=testspace&title=${pageTitle}&expand=id"
-
+          requestUrl="https://stadion.atlassian.net/wiki/rest/api/content?spaceKey=testspace&title=${encodedPageTitle}&expand=id"
+      
           # Log the request URL for debugging
           echo "Making GET request to: $requestUrl"
-
+      
           # Make a GET request to fetch the page details by title
-          response=$(curl -u "john@stadion.io:${{ secrets.ATLASSIAN_API_TOKEN }}" "$requestUrl")
-          
+          response=$(curl -s -u "john@stadion.io:${{ secrets.ATLASSIAN_API_TOKEN }}" "$requestUrl")
+      
+          # Log the response
           echo "Response: $response"
-
+        
       # Step 6: Construct the full URL for the Confluence page
       - name: Construct Confluence URL
         id: construct_url
