@@ -77,6 +77,12 @@ jobs:
           # Make a GET request to fetch the page details by title
           response=$(curl -s -u ${{ env.atlassianUserName }}:${{ secrets.ATLASSIAN_API_TOKEN }} "${{ env.confluenceBaseUrl }}/wiki/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id")
 
+          # Check for curl error
+          if [ $? -ne 0 ]; then
+            echo "Error: Failed to make the GET request to Confluence API."
+            exit 1
+          fi
+
           # Debugging: Print the response
           echo "Response: $response"
 
