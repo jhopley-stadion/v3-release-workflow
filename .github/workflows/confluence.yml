@@ -96,7 +96,7 @@ jobs:
             echo "Error: WebUI link not found."
             exit 1
           fi
-      
+    
           # Save the webui link to an environment variable
           echo "confluencePageUrl=${{ env.confluenceBaseUrl }}/wiki${webuiLink}" >> $GITHUB_ENV
       
