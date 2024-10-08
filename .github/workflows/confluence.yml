@@ -137,14 +137,6 @@ jobs:
                       "type": "button",
                       "text": {
                         "type": "plain_text",
-                        "text": "View JIRA Release"
-                      },
-                      "url": "${{ env.jiraBaseUrl }}/projects/${{ env.jiraProjectKey }}/releases/${{ env.latest_tag }}"
-                    },
-                    {
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
                         "text": "View Confluence Release"
                       },
                       "url": "${{ env.confluencePageUrl }}"
