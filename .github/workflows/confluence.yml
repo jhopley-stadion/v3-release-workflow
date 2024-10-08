@@ -77,6 +77,9 @@ jobs:
         # Make a GET request to fetch the page details by title
         response=$(curl -s -u ${{ env.atlassianUserName }}:${{ secrets.ATLASSIAN_API_TOKEN }} "${{ env.confluenceBaseUrl }}/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id")
 
+        # Debugging: Print the response
+        echo "Response: $response"
+
         # Extract the page ID from the response
         pageId=$(echo "$response" | jq -r '.results[0].id')
 
