@@ -72,21 +72,24 @@ jobs:
         id: get_page_id
         run: |
           # Construct the page title
-          pageTitle="Release v${{ env.latest_tag }}"
+          pageTitle="Release v1.18.9"
 
           # Construct the request URL
-          requestUrl="https://stadion.atlassian.net/wiki/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id"
+          requestUrl="https://stadion.atlassian.net/wiki/rest/api/content?spaceKey=testspace&title=${pageTitle}&expand=id"
 
           # Log the request URL for debugging
           echo "Making GET request to: $requestUrl"
 
+          # Log token
+          echo "Token: ${{ secrets.ATLASSIAN_API_TOKEN }}"
+
           # Make a GET request to fetch the page details by title
-          response=$(curl -s -u ${{ env.atlassianUserName }}:${{ secrets.ATLASSIAN_API_TOKEN }} "$requestUrl")
+          response=$(curl -s -u "john@stadion.io:${{ secrets.ATLASSIAN_API_TOKEN }}" "$requestUrl")
 
           # Check for curl error
           if [ $? -ne 0 ]; then
-            echo "Error: Failed to make the GET request to Confluence API."
-            exit 1
+              echo "Error: Failed to make the GET request to Confluence API."
+              exit 1
           fi
 
           # Debugging: Print the raw response
@@ -95,16 +98,16 @@ jobs:
           # Check if the response contains an error message
           errorMsg=$(echo "$response" | jq -r '.message // empty')
           if [ -n "$errorMsg" ]; then
-            echo "Error from Confluence API: $errorMsg"
-            exit 1
+              echo "Error from Confluence API: $errorMsg"
+              exit 1
           fi
 
           # Check for results in the response
           results=$(echo "$response" | jq -r '.results | length')
           if [ "$results" -eq 0 ]; then
-            echo "Warning: No pages found for title '$pageTitle'."
-            echo "confluencePageId=none" >> $GITHUB_ENV
-            exit 0
+              echo "Warning: No pages found for title '$pageTitle'."
+              echo "confluencePageId=none" >> $GITHUB_ENV
+              exit 0
           fi
 
           # Extract the page ID from the response
@@ -112,13 +115,16 @@ jobs:
 
           # Check if the page ID was found
           if [ "$pageId" == "null" ] || [ -z "$pageId" ]; then
-            echo "Warning: Page not found for title '$pageTitle'. Proceeding without it."
-            echo "confluencePageId=none" >> $GITHUB_ENV
+              echo "Warning: Page not found for title '$pageTitle'. Proceeding without it."
+              echo "confluencePageId=none" >> $GITHUB_ENV
           else
-            echo "Page ID found: $pageId"
-            echo "confluencePageId=$pageId" >> $GITHUB_ENV
-          fi
+              echo "Page ID found: $pageId"
+              echo "confluencePageId=$pageId" >> $GITHUB_ENV
 
+              # Extract the URL from the response
+              pageUrl=$(echo "$response" | jq -r '._links.webui')
+              echo "Page URL: https://stadion.atlassian.net$pageUrl"
+          fi
 
       # Step 6: Construct the full URL for the Confluence page
       - name: Construct Confluence URL
