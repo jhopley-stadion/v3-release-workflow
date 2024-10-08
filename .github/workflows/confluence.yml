@@ -43,7 +43,7 @@ jobs:
           folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
           jiraBaseUrl=$(jq -r '.jiraSettings.jiraBaseUrl' workflow.config.json)
           jiraProjectKey=$(jq -r '.jiraSettings.jiraProjectKey' workflow.config.json)
-          slackChannel=$(jq -r '.slackSettings.slackChannel' workflow.config.json)
+          slackChannel=$(jq -r '.slackSettings.channel' workflow.config.json)
 
           # Export the values to the environment for the next steps
           echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
@@ -71,13 +71,13 @@ jobs:
         id: get_page_id
         run: |
           # Construct the page title
-          pageTitle="Release v1.18.9"
+          pageTitle="Release v${{ env.latest_tag }}"
           
           # Replace spaces with +
           encodedPageTitle="${pageTitle// /+}"
       
           # Construct the request URL
-          requestUrl="https://stadion.atlassian.net/wiki/rest/api/content?spaceKey=testspace&title=${encodedPageTitle}&expand=id"
+          requestUrl="${{ env.confluenceBaseUrl }}/wiki/rest/api/content?spaceKey=testspace&title=${encodedPageTitle}&expand=id"
       
           # Log the request URL for debugging
           echo "Making GET request to: $requestUrl"
@@ -87,14 +87,25 @@ jobs:
       
           # Log the response
           echo "Response: $response"
-        
-      # Step 6: Construct the full URL for the Confluence page
+          
+          # Extract the webui link from the response
+          webuiLink=$(echo "$response" | jq -r '.results[0]._links.webui')
+          
+          # Check if the webui link was found
+          if [ -z "$webuiLink" ] || [ "$webuiLink" == "null" ]; then
+            echo "Error: WebUI link not found."
+            exit 1
+          fi
+      
+          # Save the webui link to an environment variable
+          echo "confluencePageUrl=${{ env.confluenceBaseUrl }}${webuiLink}" >> $GITHUB_ENV
+      
+      # Step 6: Construct the full URL for the Confluence page (already done above)
       - name: Construct Confluence URL
         id: construct_url
         run: |
-          confluencePageUrl="${{ env.confluenceBaseUrl }}/wiki/spaces/${{ env.confluenceSpaceName }}/pages/${{ env.confluencePageId }}/Release+v${{ env.latest_tag }}"
-          echo "confluencePageUrl=$confluencePageUrl" >> $GITHUB_ENV
-
+          echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
+      
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
