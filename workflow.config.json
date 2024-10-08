@@ -104,5 +104,12 @@
         }
       ]
     }
+  },
+  "confluenceSettings": {
+    "projectName": "Stadion V3 Test Project",
+    "confluenceBaseUrl": "https://stadion.atlassian.net/",
+    "confluenceParentId": "2739208609",
+    "atlassianUserName": "john@stadion.io",
+    "folderToPublish": "docs" 
   }
 }
