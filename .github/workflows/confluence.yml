@@ -73,7 +73,6 @@ jobs:
         run: |
           # Construct the page title
           pageTitle="Release v${{ env.latest_tag }}"
-
           # Construct the request URL
           requestUrl="${{ env.confluenceBaseUrl }}/wiki/rest/api/content?spaceKey=${{ env.confluenceSpaceName }}&title=${pageTitle}&expand=id"
           
