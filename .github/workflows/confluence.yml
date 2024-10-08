@@ -10,62 +10,62 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout the repository
-    - name: Checkout
-      uses: actions/checkout@v3
+      # Step 1: Checkout the repository
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    # Step 2: Fetch the latest tag
-    - name: Fetch the latest tag
-      id: fetch_tag
-      run: |
-        latest_tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+      # Step 2: Fetch the latest tag
+      - name: Fetch the latest tag
+        id: fetch_tag
+        run: |
+          latest_tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
 
-        # Fetch the release notes
-        release_notes=$(gh release view $latest_tag --json body --jq '.body')
+          # Fetch the release notes
+          release_notes=$(gh release view $latest_tag --json body --jq '.body')
 
-        # Create a 'docs' folder if it doesn't exist
-        mkdir -p docs
+          # Create a 'docs' folder if it doesn't exist
+          mkdir -p docs
 
-        # Save the release notes with the version number in the file name
-        echo "${release_notes}" > "docs/Release v${latest_tag}.md"
-        echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Save the release notes with the version number in the file name
+          echo "${release_notes}" > "docs/Release v${latest_tag}.md"
+          echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # Step 3: Load config from JSON and set environment variables
-    - name: Load config from JSON
-      id: load_config
-      run: |
-        confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
-        confluenceSpaceName=$(jq -r '.confluenceSettings.spaceName' workflow.config.json)
-        confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
-        atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' workflow.config.json)
-        folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
-        jiraBaseUrl=$(jq -r '.jiraSettings.jiraBaseUrl' workflow.config.json)
-        jiraProjectKey=$(jq -r '.jiraSettings.jiraProjectKey' workflow.config.json)
-        slackChannel=$(jq -r '.slackSettings.slackChannel' workflow.config.json)
+      # Step 3: Load config from JSON and set environment variables
+      - name: Load config from JSON
+        id: load_config
+        run: |
+          confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
+          confluenceSpaceName=$(jq -r '.confluenceSettings.spaceName' workflow.config.json)
+          confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
+          atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' workflow.config.json)
+          folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
+          jiraBaseUrl=$(jq -r '.jiraSettings.jiraBaseUrl' workflow.config.json)
+          jiraProjectKey=$(jq -r '.jiraSettings.jiraProjectKey' workflow.config.json)
+          slackChannel=$(jq -r '.slackSettings.slackChannel' workflow.config.json)
 
-        # Export the values to the environment for the next steps
-        echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
-        echo "confluenceSpaceName=$confluenceSpaceName" >> $GITHUB_ENV
-        echo "confluenceParentId=$confluenceParentId" >> $GITHUB_ENV
+          # Export the values to the environment for the next steps
+          echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
+          echo "confluenceSpaceName=$confluenceSpaceName" >> $GITHUB_ENV
+          echo "confluenceParentId=$confluenceParentId" >> $GITHUB_ENV
 
-        echo "atlassianUserName=$atlassianUserName" >> $GITHUB_ENV
-        echo "folderToPublish=$folderToPublish" >> $GITHUB_ENV
-        echo "jiraBaseUrl=$jiraBaseUrl" >> $GITHUB_ENV
-        echo "jiraProjectKey=$jiraProjectKey" >> $GITHUB_ENV
-        echo "slackChannel=$slackChannel" >> $GITHUB_ENV
+          echo "atlassianUserName=$atlassianUserName" >> $GITHUB_ENV
+          echo "folderToPublish=$folderToPublish" >> $GITHUB_ENV
+          echo "jiraBaseUrl=$jiraBaseUrl" >> $GITHUB_ENV
+          echo "jiraProjectKey=$jiraProjectKey" >> $GITHUB_ENV
+          echo "slackChannel=$slackChannel" >> $GITHUB_ENV
 
-    # Step 4: Publish Markdown to Confluence
-    - name: Publish Markdown to Confluence
-      id: publish_confluence
-      uses: markdown-confluence/publish-action@v5
-      with:
-        confluenceBaseUrl: ${{ env.confluenceBaseUrl }}
-        confluenceParentId: ${{ env.confluenceParentId }} # You may need to replace this with the actual parent ID
-        atlassianUserName: ${{ env.atlassianUserName }}
-        atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
-        folderToPublish: ${{ env.folderToPublish }}
+      # Step 4: Publish Markdown to Confluence
+      - name: Publish Markdown to Confluence
+        id: publish_confluence
+        uses: markdown-confluence/publish-action@v5
+        with:
+          confluenceBaseUrl: ${{ env.confluenceBaseUrl }}
+          confluenceParentId: ${{ env.confluenceParentId }} # You may need to replace this with the actual parent ID
+          atlassianUserName: ${{ env.atlassianUserName }}
+          atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
+          folderToPublish: ${{ env.folderToPublish }}
 
       # Step 5: Get the page ID of the recently created page
       - name: Get Confluence page ID
@@ -91,60 +91,59 @@ jobs:
 
           echo "confluencePageId=$pageId" >> $GITHUB_ENV
 
+      # Step 6: Construct the full URL for the Confluence page
+      - name: Construct Confluence URL
+        id: construct_url
+        run: |
+          confluencePageUrl="${{ env.confluenceBaseUrl }}/wiki/spaces/${{ env.confluenceSpaceName }}/pages/${{ env.confluencePageId }}/Release+v${{ env.latest_tag }}"
+          echo "confluencePageUrl=$confluencePageUrl" >> $GITHUB_ENV
 
-    # Step 6: Construct the full URL for the Confluence page
-    - name: Construct Confluence URL
-      id: construct_url
-      run: |
-        confluencePageUrl="${{ env.confluenceBaseUrl }}/wiki/spaces/${{ env.confluenceSpaceName }}/pages/${{ env.confluencePageId }}/Release+v${{ env.latest_tag }}"
-        echo "confluencePageUrl=$confluencePageUrl" >> $GITHUB_ENV
-
-    # Step 7: Send Slack notification with GitHub and JIRA buttons
-    - name: Send Slack notification
-      uses: slackapi/slack-github-action@v1.25.0
-      with:
-        channel-id: ${{ env.slackChannel }}
-        payload: |
-          {
-            "text": "Release notes for version ${latest_tag} have been published to Confluence. :rocket:",
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "*Release v${latest_tag}* has been published."
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "View GitHub Release"
-                    },
-                    "url": "https://github.com/${{ github.repository }}/releases/tag/${latest_tag}"
-                  },
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "View JIRA Release"
-                    },
-                    "url": "${{ env.jiraBaseUrl }}/projects/${{ env.jiraProjectKey }}/releases/${latest_tag}"
-                  },
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": "View Confluence Release"
-                    },
-                    "url": "${{ env.confluencePageUrl }}"
+      # Step 7: Send Slack notification with GitHub and JIRA buttons
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          channel-id: ${{ env.slackChannel }}
+          payload: |
+            {
+              "text": "Release notes for version ${latest_tag} have been published to Confluence. :rocket:",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Release v${latest_tag}* has been published."
                   }
-                ]
-              }
-            ]
-          }
-      env:
-        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View GitHub Release"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/releases/tag/${latest_tag}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View JIRA Release"
+                      },
+                      "url": "${{ env.jiraBaseUrl }}/projects/${{ env.jiraProjectKey }}/releases/${latest_tag}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Confluence Release"
+                      },
+                      "url": "${{ env.confluencePageUrl }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
