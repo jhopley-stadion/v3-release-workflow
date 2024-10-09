@@ -134,7 +134,7 @@ jobs:
 
           # Save formatted release notes to GITHUB_ENV
           echo "formattedReleaseNotes=${formattedReleaseNotes}" >> $GITHUB_ENV
-        shell: /usr/bin/bash -e
+        shell: bash  # Use the correct shell definition
 
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
