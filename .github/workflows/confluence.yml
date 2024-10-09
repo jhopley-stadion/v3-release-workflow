@@ -117,24 +117,23 @@ jobs:
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
     
-      # Step to format release notes for Slack
-      - name: Format Release Notes for Slack
-        run: |
-          # Format the release notes for Slack compatibility
-          formattedReleaseNotes=$(echo "${{ env.releaseNotes }}" | \
-            sed ':a;N;$!ba;s/\n/\\n/g' \
-                -e 's/# /*/g' \
-                -e 's/"/\\"/g' \
-                -e 's/_/\\_/g' \
-                -e 's/\*/\\*/g' \
-                -e 's/\`/\\`/g' \
-                -e 's/\([0-9]*\)\. /• /g' \
-                -e 's|\[\(.*\)\](\(.*\))|<\2|\1>|g' \
-          )
 
+      - name: Format the release notes for Slack compatibility
+        id: format_release_notes
+        run: |
+          formattedReleaseNotes=$(echo "${{ env.releaseNotes }}" | \
+            sed ':a;N;$!ba;s/\n/\\n/g' \                                   # Replace newlines with \n for Slack formatting
+                -e 's/# /*/g' \                                            # Convert headings (#) to bullet points (*)
+                -e 's/"/\\"/g' \                                           # Escape double quotes
+                -e 's/_/\\_/g' \                                           # Escape underscores
+                -e 's/\*/\\*/g' \                                          # Escape asterisks
+                -e 's/\`/\\`/g' \                                          # Escape backticks
+                -e 's/\([0-9]\+\)\. /• /g' \                               # Convert numbered list to bullet points
+                -e 's|\[\([^]]*\)\](\([^)]*\))|<\2|\1>|g'                  # Convert [text](link) to <link|text> for Slack
+          )
+          
           # Save formatted release notes to GITHUB_ENV
           echo "formattedReleaseNotes=${formattedReleaseNotes}" >> $GITHUB_ENV
-        shell: bash  # Use the correct shell definition
 
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
