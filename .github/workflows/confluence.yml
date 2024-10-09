@@ -29,11 +29,13 @@ jobs:
           # Save the release notes with the version number in the file name
           echo "${release_notes}" > "docs/Release v${latest_tag}.md"
 
+          # Safely write multi-line release notes to GITHUB_ENV
+          echo "releaseNotes<<EOF" >> $GITHUB_ENV
+          echo "${release_notes}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
           # Store the latest tag in GITHUB_ENV
           echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
-          
-          # Store the raw release notes in GITHUB_ENV
-          echo "releaseNotes=${release_notes}" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -115,16 +117,7 @@ jobs:
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
     
-      # Step 7: Prepare Slack notification
-      - name: Prepare Slack Notification
-        id: prepare_slack
-        run: |
-          # Escape quotes and replace newlines with \n for release notes
-          escaped_release_notes=$(echo "${{ env.releaseNotes }}" | sed 's/"/\\"/g; :a; N; $!ba; s/\n/\\n/g')
-          
-          echo "escaped_release_notes=${escaped_release_notes}" >> $GITHUB_ENV
-
-      # Step 8: Send Slack notification with GitHub and JIRA buttons
+      # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
         with:
@@ -156,7 +149,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "${{ env.escaped_release_notes }}"
+                    "text": "${{ env.releaseNotes }}"
                   }
                 },
                 {
