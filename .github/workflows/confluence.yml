@@ -117,25 +117,20 @@ jobs:
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
     
-      # Step to format release notes for Slack
-      - name: Format Release Notes for Slack
+          - name: Set up environment variables
+          run: |
+            echo "releaseNotes=## What’s Changed in this release\n\n## Hotfixes 🔥\n\n* Adjusted sed command (#185) @jhopley-stadion\n\n## Contributors\n\n@jhopley-stadion" >> $GITHUB_ENV
+  
+      - name: Convert release notes to Slack format
+        id: convert_release_notes
+        uses: shivammathur/slack-markdown-converter@v1
+        with:
+          markdown: ${{ env.releaseNotes }}
+
+      - name: Save formatted release notes to GITHUB_ENV
         run: |
-          # Format the release notes for Slack compatibility
-          formattedReleaseNotes=$(echo "${{ env.releaseNotes }}" | \
-            sed ':a;N;$!ba;s/\n/\\n/g' \
-                -e 's/# /*/g' \
-                -e 's/"/\\"/g' \
-                -e 's/_/\\_/g' \
-                -e 's/\*/\\*/g' \
-                -e 's/\`/\\`/g' \
-                -e 's/\([0-9]*\)\. /• /g' \
-                -e 's|\[\(.*\)\](\(.*\))|<\2|\1>|g' \
-          )
-
-          # Save formatted release notes to GITHUB_ENV
-          echo "formattedReleaseNotes=${formattedReleaseNotes}" >> $GITHUB_ENV
-        shell: bash  # Use the correct shell definition
-
+          echo "formattedReleaseNotes=${{ steps.convert_release_notes.outputs.text }}" >> $GITHUB_ENV
+          
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
