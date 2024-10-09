@@ -28,7 +28,9 @@ jobs:
 
           # Save the release notes with the version number in the file name
           echo "${release_notes}" > "docs/Release v${latest_tag}.md"
+          echo "releaseNotes=${release_notes}" >> $GITHUB_ENV
           echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
+
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -36,6 +38,7 @@ jobs:
       - name: Load config from JSON
         id: load_config
         run: |
+          projectName=$(jq -r '.projectName' workflow.config.json)
           confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
           confluenceSpaceName=$(jq -r '.confluenceSettings.spaceName' workflow.config.json)
           confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
@@ -47,6 +50,8 @@ jobs:
 
           # Export the values to the environment for the next steps
           echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
+
+          echo "projectName=$projectName" >> $GITHUB_ENV
           echo "confluenceSpaceName=$confluenceSpaceName" >> $GITHUB_ENV
           echo "confluenceParentId=$confluenceParentId" >> $GITHUB_ENV
 
@@ -55,6 +60,9 @@ jobs:
           echo "jiraBaseUrl=$jiraBaseUrl" >> $GITHUB_ENV
           echo "jiraProjectKey=$jiraProjectKey" >> $GITHUB_ENV
           echo "slackChannel=$slackChannel" >> $GITHUB_ENV
+
+          # date
+          echo "DATE=$(date +"%B %d, %Y")" >> $GITHUB_ENV
 
       # Step 4: Publish Markdown to Confluence
       - name: Publish Markdown to Confluence
@@ -106,6 +114,10 @@ jobs:
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
     
+          - name: Get current date
+          id: current_date
+          run: echo "DATE=$(date +"%B %d, %Y")" >> $GITHUB_ENV
+
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
@@ -116,11 +128,33 @@ jobs:
               "text": "Release notes for version ${{ env.latest_tag }} have been published to Confluence. :rocket:",
               "blocks": [
                 {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":rocket: Release v${{ env.latest_tag }}"
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "text": "*${{ env.date }}*  |  ${{ env.projectName }}",
+                      "type": "mrkdwn"
+                    }
+                  ]
+                },
+                {
+                  "type": "divider"
+                },
+                {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Release v${{ env.latest_tag }}* has been published."
+                    "text": "${{ env.releaseNotes }}"
                   }
+                },
+                {
+                  "type": "divider"
                 },
                 {
                   "type": "actions",
