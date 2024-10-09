@@ -129,7 +129,7 @@ jobs:
         env:
           RELEASE_NOTES: ${{ env.releaseNotes }}
         run: |
-          node scripts/formatReleaseNotes.mjs > formattedReleaseNotes.txt
+          node workflow-scripts/slackify-release.workflow.mjs > formattedReleaseNotes.txt
 
       - name: Save formatted release notes to GITHUB_ENV
         run: echo "formattedReleaseNotes=$(cat formattedReleaseNotes.txt)" >> $GITHUB_ENV
