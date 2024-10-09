@@ -111,12 +111,20 @@ jobs:
           # Save the webui link to an environment variable
           echo "confluencePageUrl=${{ env.confluenceBaseUrl }}/wiki${webuiLink}" >> $GITHUB_ENV
       
-      # Step 6: Construct the full URL for the Confluence page (already done above)
+      # Step 6: Construct the full URL for the Confluence page (already done above) 
       - name: Construct Confluence URL
         id: construct_url
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
     
+      - name: Format Release Notes for Slack
+        run: |
+          # Replace newlines with the Slack-compatible string
+          formattedReleaseNotes=$(echo "${{ env.releaseNotes }}" | sed ':a;N;$!ba;s/\n/\\n/g')
+          
+          # Save formatted release notes to GITHUB_ENV
+          echo "formattedReleaseNotes=${formattedReleaseNotes}" >> $GITHUB_ENV
+
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
@@ -149,7 +157,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "${{ env.releaseNotes }}"
+                    "text": "${{ env.formattedReleaseNotes }}"
                   }
                 },
                 {
