@@ -117,24 +117,20 @@ jobs:
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
     
+          - name: Set up environment variables
+          run: |
+            echo "releaseNotes=## What’s Changed in this release\n\n## Hotfixes 🔥\n\n* Adjusted sed command (#185) @jhopley-stadion\n\n## Contributors\n\n@jhopley-stadion" >> $GITHUB_ENV
+  
+      - name: Convert release notes to Slack format
+        id: convert_release_notes
+        uses: shivammathur/slack-markdown-converter@v1
+        with:
+          markdown: ${{ env.releaseNotes }}
 
-      - name: Format the release notes for Slack compatibility
-        id: format_release_notes
+      - name: Save formatted release notes to GITHUB_ENV
         run: |
-          formattedReleaseNotes=$(echo "${{ env.releaseNotes }}" | \
-            sed ':a;N;$!ba;s/\n/\\n/g' \                                   # Replace newlines with \n for Slack formatting
-                -e 's/# /*/g' \                                            # Convert headings (#) to bullet points (*)
-                -e 's/"/\\"/g' \                                           # Escape double quotes
-                -e 's/_/\\_/g' \                                           # Escape underscores
-                -e 's/\*/\\*/g' \                                          # Escape asterisks
-                -e 's/\`/\\`/g' \                                          # Escape backticks
-                -e 's/\([0-9]\+\)\. /• /g' \                               # Convert numbered list to bullet points
-                -e 's|\[\([^]]*\)\](\([^)]*\))|<\2|\1>|g'                  # Convert [text](link) to <link|text> for Slack
-          )
+          echo "formattedReleaseNotes=${{ steps.convert_release_notes.outputs.text }}" >> $GITHUB_ENV
           
-          # Save formatted release notes to GITHUB_ENV
-          echo "formattedReleaseNotes=${formattedReleaseNotes}" >> $GITHUB_ENV
-
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
