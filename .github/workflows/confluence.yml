@@ -133,6 +133,10 @@ jobs:
 
       - name: Save formatted release notes to GITHUB_ENV
         run: echo "formattedReleaseNotes=$(cat formattedReleaseNotes.txt)" >> $GITHUB_ENV
+
+
+      - name: Save formatted release notes to GITHUB_ENV
+        run: echo "formattedReleaseNotes=$(cat formattedReleaseNotes.txt)" >> $GITHUB_ENV
       
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
