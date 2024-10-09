@@ -116,11 +116,6 @@ jobs:
         id: construct_url
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
-    
-      - name: Set up environment variables
-        run: |
-          echo "releaseNotes=## What’s Changed in this release\n\n## Hotfixes 🔥\n\n* Adjusted sed command (#185) @jhopley-stadion\n\n## Contributors\n\n@jhopley-stadion" >> $GITHUB_ENV
-
 
       - name: Set up Node.js
         uses: actions/setup-node@v2
