@@ -119,10 +119,6 @@ jobs:
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
     
-          - name: Get current date
-          id: current_date
-          run: echo "DATE=$(date +"%B %d, %Y")" >> $GITHUB_ENV
-
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
