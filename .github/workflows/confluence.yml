@@ -117,20 +117,28 @@ jobs:
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
     
-          - name: Set up environment variables
-          run: |
-            echo "releaseNotes=## What’s Changed in this release\n\n## Hotfixes 🔥\n\n* Adjusted sed command (#185) @jhopley-stadion\n\n## Contributors\n\n@jhopley-stadion" >> $GITHUB_ENV
-  
-      - name: Convert release notes to Slack format
-        id: convert_release_notes
-        uses: shivammathur/slack-markdown-converter@v1
+      - name: Set up environment variables
+        run: |
+          echo "releaseNotes=## What’s Changed in this release\n\n## Hotfixes 🔥\n\n* Adjusted sed command (#185) @jhopley-stadion\n\n## Contributors\n\n@jhopley-stadion" >> $GITHUB_ENV
+
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          markdown: ${{ env.releaseNotes }}
+          node-version: '20' 
+
+      - name: Install Dependencies
+        run: npm install slackify-markdown
+
+      - name: Format Release Notes
+        env:
+          RELEASE_NOTES: ${{ env.releaseNotes }}
+        run: |
+          node scripts/formatReleaseNotes.mjs > formattedReleaseNotes.txt
 
       - name: Save formatted release notes to GITHUB_ENV
-        run: |
-          echo "formattedReleaseNotes=${{ steps.convert_release_notes.outputs.text }}" >> $GITHUB_ENV
-          
+        run: echo "formattedReleaseNotes=$(cat formattedReleaseNotes.txt)" >> $GITHUB_ENV
+      
       # Step 7: Send Slack notification with GitHub and JIRA buttons
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
