@@ -167,9 +167,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           new_tag: ${{ env.new_tag }}
-
-      - name: Create Rebase PR for hotfix
+          
+      # Step 7: Create Pull Request for rebasing develop with main
+      - name: Force-create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
+        run: |
+          git fetch origin
+          git checkout develop
+          git pull origin develop
+          git checkout -b rebase/main-to-develop
+          git rebase origin/main
+          git push origin rebase/main-to-develop --force
+      - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
           commit-message: "Rebase develop with changes from main"
@@ -177,8 +186,6 @@ jobs:
           base: "develop"
           title: "Rebase develop with main for hotfix"
           body: |
-            This PR rebases the `develop` branch with the latest changes from `main` 
-            after the hotfix has been merged into `main`.
-        continue-on-error: true
+            This PR rebases the `develop` branch with the latest changes from `main`.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
