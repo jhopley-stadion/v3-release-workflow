@@ -19,7 +19,6 @@
 # 7. Format and send a Slack notification with links to GitHub and Confluence.
 
 name: Create Confluence Release Notes
-
 on:
   workflow_run:
     workflows: ["Create Release"]
