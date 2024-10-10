@@ -167,7 +167,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           new_tag: ${{ env.new_tag }}
-          
+                
       # Step 7: Create Pull Request for rebasing develop with main after hotfix
       # Hotfix
       - name: Force-create Rebase PR for hotfix
@@ -175,11 +175,8 @@ jobs:
         run: |
           git fetch origin
           git checkout main
-          git pull origin main  # Ensure main is up-to-date
-          git checkout develop 
-          git pull origin develop  # Ensure develop is up-to-date
-          git checkout -b rebase/${{ env.new_tag }}  # Create new branch with version number
-          git rebase origin/main  # Rebase develop onto main
+          git pull origin main
+          git checkout -b rebase/${{ env.new_tag }} 
           git push origin rebase/${{ env.new_tag }} --force  # Push new branch to remote
 
       - name: Create Pull Request
