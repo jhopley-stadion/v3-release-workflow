@@ -177,7 +177,7 @@ jobs:
           git checkout main
           git pull origin main
           git checkout -b rebase/${{ env.new_tag }} 
-          git push origin rebase/${{ env.new_tag }} --force  # Push new branch to remote
+          git push origin rebase/${{ env.new_tag }} --force 
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
