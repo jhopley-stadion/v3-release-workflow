@@ -173,7 +173,9 @@ jobs:
       - name: Force-create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
         run: |
-          git checkout -b rebase/${{ env.new_tag }} 
+          git fetch origin main  # Fetch the latest changes from the remote main branch
+          git pull origin main  # Pull the latest changes from the remote main branch
+          git checkout -b rebase/${{ env.new_tag }} origin/main  # Create the new branch from the latest main
           git push origin rebase/${{ env.new_tag }} --force 
 
       - name: Create Pull Request
