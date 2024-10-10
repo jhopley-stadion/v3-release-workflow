@@ -36,3 +36,4 @@ jobs:
         run: node ./workflow-scripts/branch-validator.workflow.mjs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub token for authentication
+ 
