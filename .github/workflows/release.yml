@@ -173,12 +173,21 @@ jobs:
       - name: Force-create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
         run: |
-          git fetch origin main  # Fetch the latest changes from the remote main branch
-          git pull origin main  # Pull the latest changes from the remote main branch
-          git checkout -b rebase/${{ env.new_tag }} origin/main  # Create the new branch from the latest main
-          git push origin rebase/${{ env.new_tag }} --force 
-
+          git fetch --all
+          git checkout main
+          git pull origin main
+          echo "=== Main Branch ==="
+          git log --oneline -n 5  # Show the latest 5 commits in main
+          git checkout develop
+          git pull origin develop
+          echo "=== Develop Branch ==="
+          git log --oneline -n 5  # Show the latest 5 commits in develop
+          git checkout -b rebase/${{ env.new_tag }}  # Create a new branch from the updated main
+          echo "=== New Branch Created ==="
+          git log --oneline -n 5  # Show the latest 5 commits in the new branch
+          
       - name: Create Pull Request
+        if: env.branch_type == 'hotfix'
         uses: peter-evans/create-pull-request@v5
         with:
           commit-message: "Rebase develop with changes from main"
