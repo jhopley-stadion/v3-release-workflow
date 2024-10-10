@@ -169,6 +169,7 @@ jobs:
           new_tag: ${{ env.new_tag }}
           
       # Step 7: Create Pull Request for rebasing develop with main
+      # Hotfix
       - name: Force-create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
         run: |
