@@ -169,13 +169,10 @@ jobs:
           new_tag: ${{ env.new_tag }}
                 
       # Step 7: Create Pull Request for rebasing develop with main after hotfix
-      # Hotfix
+      # Hotfix/1.21.12
       - name: Force-create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
         run: |
-          git fetch origin
-          git checkout main
-          git pull origin main
           git checkout -b rebase/${{ env.new_tag }} 
           git push origin rebase/${{ env.new_tag }} --force 
 
