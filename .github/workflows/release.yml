@@ -168,20 +168,21 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           new_tag: ${{ env.new_tag }}
           
-      # Step 7: Create Pull Request for rebasing develop with main
+
+      # Step 7: Create Pull Request for rebasing develop with main after hotfix
       # Hotfix
       - name: Force-create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
         run: |
           git fetch origin
           git checkout main
-          git pull origin main
+          git pull origin main  # Ensure main is up-to-date
           git checkout develop 
-          git pull origin develop
-          git checkout -b rebase/main-to-develop
-          git rebase origin/main 
-          git rebase --continue || echo "No rebase needed"
-          git push origin rebase/main-to-develop --force
+          git pull origin develop  # Ensure develop is up-to-date
+          git checkout -b rebase/main-to-develop  # Create new branch from develop
+          git rebase origin main  # Rebase develop onto main
+          git push origin rebase/main-to-develop --force  # Push new branch to remote
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
