@@ -10,7 +10,6 @@
 # 6. Publishes the release by updating the draft with the new tag name.
 # 7. If the branch type is hotfix, creates a pull request to rebase the develop branch 
 #    with the latest changes from main.
-
 name: Create Release
 on:
   push:
