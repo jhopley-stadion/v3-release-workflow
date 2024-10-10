@@ -150,21 +150,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           new_tag: ${{ env.new_tag }}
 
-      # Step 9: Rebase develop with main for hotfixes
-      # If the branch type is hotfix, this step rebases the develop branch with changes from the main branch.
-      - name: Rebase develop with main for hotfixes
+      # Step 9: Create a rebase PR from main to develop for hotfixes
+      # If the branch type is hotfix, this step creates a PR to merge main into develop.
+      - name: Create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
-        run: |
-          # Log the rebasing process
-          echo "Rebasing develop with main..."
-          # Configure Git user for the rebase
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-          # Fetch the latest changes from develop
-          git fetch origin develop
-          # Check out the develop branch
-          git checkout develop
-          # Perform the rebase with the main branch
-          git rebase origin/main
-          # Push the rebased develop branch
-          git push origin develop --force-with-lease
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "Rebase develop with changes from main"
+          branch: "rebase/main-to-develop"
+          base: "develop"
+          head: "main"
+          title: "Rebase develop with main for hotfix"
+          body: |
+            This PR rebases the `develop` branch with the latest changes from `main` after the hotfix has been merged into `main`.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
