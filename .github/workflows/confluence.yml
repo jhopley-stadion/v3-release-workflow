@@ -1,4 +1,25 @@
+# GitHub Actions Workflow: Create Confluence Release Notes
+# 
+# Purpose:
+# This workflow automates the process of creating and publishing release notes 
+# to Confluence after a new GitHub release is created. It retrieves the latest
+# release tag, formats the release notes, publishes them to Confluence, and 
+# sends a Slack notification with links to the GitHub release and Confluence page.
+#
+# Trigger:
+# - The workflow runs whenever the "Create Release" workflow is completed successfully.
+# 
+# Steps Overview:
+# 1. Checkout the repository.
+# 2. Fetch the latest release tag and release notes.
+# 3. Load configuration settings from JSON.
+# 4. Publish the release notes to Confluence.
+# 5. Retrieve the Confluence page URL.
+# 6. Construct the Confluence URL.
+# 7. Format and send a Slack notification with links to GitHub and Confluence.
+
 name: Create Confluence Release Notes
+
 on:
   workflow_run:
     workflows: ["Create Release"]
@@ -11,35 +32,38 @@ jobs:
 
     steps:
       # Step 1: Checkout the repository
+      # This step checks out the repository so that the workflow has access to all the files, including the configuration and scripts.
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Step 2: Fetch the latest tag
+      # Step 2: Fetch the latest release tag and release notes
+      # This step fetches the most recent GitHub release, extracts the release notes, 
+      # and saves them both to a local file and as environment variables.
       - name: Fetch the latest tag
         id: fetch_tag
         run: |
           latest_tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
 
-          # Fetch the release notes
+          # Fetch the release notes associated with the latest tag
           release_notes=$(gh release view $latest_tag --json body --jq '.body')
 
-          # Create a 'docs' folder if it doesn't exist
+          # Save the release notes in a docs directory for future reference
           mkdir -p docs
-
-          # Save the release notes with the version number in the file name
           echo "${release_notes}" > "docs/Release v${latest_tag}.md"
 
-          # Safely write multi-line release notes to GITHUB_ENV
+          # Safely write multi-line release notes to GITHUB_ENV for later steps
           echo "releaseNotes<<EOF" >> $GITHUB_ENV
           echo "${release_notes}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-          # Store the latest tag in GITHUB_ENV
+          # Store the latest tag as an environment variable for future use
           echo "latest_tag=${latest_tag}" >> $GITHUB_ENV
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Load config from JSON and set environment variables
+      # Step 3: Load configuration from a JSON file
+      # Loads configuration values from a JSON file (such as project name, Confluence settings, etc.)
+      # and exports them as environment variables for the subsequent steps.
       - name: Load config from JSON
         id: load_config
         run: |
@@ -53,7 +77,7 @@ jobs:
           jiraProjectKey=$(jq -r '.jiraSettings.jiraProjectKey' workflow.config.json)
           slackChannel=$(jq -r '.slackSettings.channel' workflow.config.json)
 
-          # Export the values to the environment for the next steps
+          # Export values for use in future steps
           echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
           echo "projectName=$projectName" >> $GITHUB_ENV
           echo "confluenceSpaceName=$confluenceSpaceName" >> $GITHUB_ENV
@@ -64,81 +88,77 @@ jobs:
           echo "jiraProjectKey=$jiraProjectKey" >> $GITHUB_ENV
           echo "slackChannel=$slackChannel" >> $GITHUB_ENV
 
-          # date
+          # Store the current date in a human-readable format
           echo "DATE=$(date +"%B %d, %Y")" >> $GITHUB_ENV
 
-      # Step 4: Publish Markdown to Confluence
+      # Step 4: Publish the Markdown release notes to Confluence
+      # Publishes the release notes stored in the 'docs' folder to the specified Confluence space.
       - name: Publish Markdown to Confluence
         id: publish_confluence
         uses: markdown-confluence/publish-action@v5
         with:
           confluenceBaseUrl: ${{ env.confluenceBaseUrl }}
-          confluenceParentId: ${{ env.confluenceParentId }} # You may need to replace this with the actual parent ID
+          confluenceParentId: ${{ env.confluenceParentId }} # Parent ID for the Confluence page hierarchy
           atlassianUserName: ${{ env.atlassianUserName }}
           atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
           folderToPublish: ${{ env.folderToPublish }}
 
+      # Step 5: Get the Confluence page ID for the newly published page
+      # Retrieves the Confluence page ID by querying the API using the page title (based on the release tag).
       - name: Get Confluence page ID
         id: get_page_id
         run: |
-          # Construct the page title
           pageTitle="Release v${{ env.latest_tag }}"
-          
-          # Replace spaces with +
           encodedPageTitle="${pageTitle// /+}"
-      
-          # Construct the request URL
           requestUrl="${{ env.confluenceBaseUrl }}/wiki/rest/api/content?spaceKey=testspace&title=${encodedPageTitle}&expand=id"
-      
-          # Log the request URL for debugging
+
+          # Log the request and response for debugging
           echo "Making GET request to: $requestUrl"
-      
-          # Make a GET request to fetch the page details by title
           response=$(curl -s -u "john@stadion.io:${{ secrets.ATLASSIAN_API_TOKEN }}" "$requestUrl")
-      
-          # Log the response
           echo "Response: $response"
-          
-          # Extract the webui link from the response
+
+          # Extract and store the WebUI link from the response
           webuiLink=$(echo "$response" | jq -r '.results[0]._links.webui')
-          
-          # Check if the webui link was found
           if [ -z "$webuiLink" ] || [ "$webuiLink" == "null" ]; then
             echo "Error: WebUI link not found."
             exit 1
           fi
-    
-          # Save the webui link to an environment variable
+
+          # Save the Confluence page URL as an environment variable
           echo "confluencePageUrl=${{ env.confluenceBaseUrl }}/wiki${webuiLink}" >> $GITHUB_ENV
-      
-      # Step 6: Construct the full URL for the Confluence page (already done above) 
+
+      # Step 6: Construct and display the full Confluence page URL
+      # Simply echoes the constructed Confluence URL to the workflow logs.
       - name: Construct Confluence URL
         id: construct_url
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
 
+      # Step 7: Set up Node.js to format release notes for Slack
+      # Installs Node.js and the necessary dependencies for converting Markdown to Slack-compatible format.
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '20' 
+          node-version: '20'
 
       - name: Install Dependencies
         run: npm install slackify-markdown
 
+      # Step 8: Format the release notes for Slack
+      # Converts the release notes to Slack-compatible formatting using the 'slackify-markdown' tool.
       - name: Format Release Notes
         env:
           RELEASE_NOTES: ${{ env.releaseNotes }}
         run: |
           node workflow-scripts/slackify-release.workflow.mjs > formattedReleaseNotes.txt
 
+      # Step 9: Save the formatted release notes to the environment
+      # Stores the formatted release notes in an environment variable for use in the Slack notification.
       - name: Save formatted release notes to GITHUB_ENV
         run: echo "formattedReleaseNotes=$(cat formattedReleaseNotes.txt)" >> $GITHUB_ENV
 
-
-      - name: Save formatted release notes to GITHUB_ENV
-        run: echo "formattedReleaseNotes=$(cat formattedReleaseNotes.txt)" >> $GITHUB_ENV
-      
-      # Step 7: Send Slack notification with GitHub and JIRA buttons
+      # Step 10: Send a Slack notification with GitHub and Confluence links
+      # Sends a Slack message with buttons linking to the GitHub release and Confluence page.
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
         with:
@@ -183,6 +203,7 @@ jobs:
                       "type": "button",
                       "text": {
                         "type": "plain_text",
+                        "emoji": true,
                         "text": "View GitHub Release"
                       },
                       "url": "https://github.com/${{ github.repository }}/releases/tag/${{ env.latest_tag }}"
@@ -191,7 +212,8 @@ jobs:
                       "type": "button",
                       "text": {
                         "type": "plain_text",
-                        "text": "View Confluence Release"
+                        "emoji": true,
+                        "text": "View Confluence Page"
                       },
                       "url": "${{ env.confluencePageUrl }}"
                     }
@@ -199,5 +221,3 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
