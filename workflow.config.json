@@ -19,7 +19,8 @@
         "test",
         "performance",
         "security",
-        "revert"
+        "revert",
+        "rebase" 
       ]
     },
     "release": {
