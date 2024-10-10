@@ -168,8 +168,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           new_tag: ${{ env.new_tag }}
 
-      # Step 7: Create a rebase PR from main to develop for hotfixes
-      # If the branch type is hotfix, this step creates a PR to merge main into develop.
       - name: Create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
         uses: peter-evans/create-pull-request@v5
@@ -181,5 +179,6 @@ jobs:
           body: |
             This PR rebases the `develop` branch with the latest changes from `main` 
             after the hotfix has been merged into `main`.
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
