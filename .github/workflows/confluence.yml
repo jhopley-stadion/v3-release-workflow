@@ -25,7 +25,9 @@ on:
     workflows: ["Create Release"]
     types:
       - completed
-
+env:
+  SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+  
 jobs:
   release:
     runs-on: ubuntu-latest
