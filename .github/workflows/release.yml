@@ -179,7 +179,8 @@ jobs:
           git checkout develop 
           git pull origin develop
           git checkout -b rebase/main-to-develop
-          git rebase origin/main
+          git rebase origin/main 
+          git rebase --continue || echo "No rebase needed"
           git push origin rebase/main-to-develop --force
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
