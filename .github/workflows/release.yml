@@ -170,19 +170,32 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           new_tag: ${{ env.new_tag }}
                 
-      # Step 7: Create Pull Request for rebasing develop with main after hotfix
-      - name: Force-create Rebase PR for hotfix
+      # Step 7: Rebase develop with main after hotfix
+      - name: Rebase develop with main for hotfix
         if: env.branch_type == 'hotfix'
         run: |
           git fetch origin
-          git checkout main
-          git pull origin main  # Ensure you have the latest changes
-          git checkout -b rebase/${{ env.new_tag }}  # Create a new branch from main
-          git push origin rebase/${{ env.new_tag }} --force  # Push the new branch
+
+          # Checkout develop and ensure it's up-to-date
+          git checkout develop
+          git pull origin develop
+
+          # Create a new branch from develop
+          new_branch="rebase-hotfix-${{ env.new_tag }}"
+          git checkout -b "$new_branch"
+
+          # Rebase the new branch with main to apply hotfixes
+          git fetch origin main
+          git rebase origin/main
+
+          # Push the new branch to origin
+          git push origin "$new_branch"
+
+          # Create a pull request to merge the new branch into develop
           gh pr create \
             --base develop \
-            --head rebase/${{ env.new_tag }} \
-            --title "Hotfix from main into develop" \
-            --body "This PR includes hotfix changes from main."
+            --head "$new_branch" \
+            --title "Hotfix: Sync develop with main" \
+            --body "This PR syncs the latest hotfixes from main into develop."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
