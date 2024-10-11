@@ -178,14 +178,11 @@ jobs:
           git pull origin main  # Ensure you have the latest changes
           git checkout -b rebase/${{ env.new_tag }}  # Create a new branch from main
           git push origin rebase/${{ env.new_tag }} --force  # Push the new branch
-
-      - name: Create Pull Request with GitHub CLI
-        if: env.branch_type == 'hotfix'
-        run: |
           gh pr create \
             --base develop \
             --head rebase/${{ env.new_tag }} \
             --title "Hotfix from main into develop" \
             --body "This PR includes hotfix changes from main."
+            --merge-method rebase
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
