@@ -1,204 +1,184 @@
-# This GitHub Actions workflow automates the release creation process.
-# It is triggered on a push to the main branch. The workflow performs the 
-# following steps:
-#
-# 1. Checks out the repository to access code and tags.
-# 2. Retrieves the latest release tag or creates an initial tag (1.0.0) if none exists.
-# 3. Determines the branch type (release or hotfix) based on the commit message.
-# 4. Increments the version based on the branch type.
-# 5. Drafts release notes using Release Drafter based on the selected configuration.
-# 6. Publishes the release by updating the draft with the new tag name.
-# 7. If the branch type is hotfix, creates a pull request to rebase the develop branch 
-#    with the latest changes from main.
+  # This GitHub Actions workflow automates the release creation process.
+  # It is triggered on a push to the main branch. The workflow performs the 
+  # following steps:
+  #
+  # 1. Checks out the repository to access code and tags.
+  # 2. Retrieves the latest release tag or creates an initial tag (1.0.0) if none exists.
+  # 3. Determines the branch type (release or hotfix) based on the commit message.
+  # 4. Increments the version based on the branch type.
+  # 5. Drafts release notes using Release Drafter based on the selected configuration.
+  # 6. Publishes the release by updating the draft with the new tag name.
+  # 7. If the branch type is hotfix, creates a pull request to rebase the develop branch 
+  #    with the latest changes from main.
 
-name: Create Release
-on:
-  push:
-    branches:
-      - main
-permissions:
-  contents: write  
-  issues: read    
-  deployments: write 
+  name: Create Release
+  on:
+    push:
+      branches:
+        - main
+  permissions:
+    contents: write  
+    issues: read    
+    deployments: write 
 
-jobs:
-  create-release:
-    runs-on: ubuntu-latest
+  jobs:
+    create-release:
+      runs-on: ubuntu-latest
 
-    steps:
-      # Step 1: Checkout repository
-      # This step checks out the repository to ensure that the workflow has 
-      # access to the code and tags, which is essential for versioning.
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          ref: main
+      steps:
+        # Step 1: Checkout repository
+        # This step checks out the repository to ensure that the workflow has 
+        # access to the code and tags, which is essential for versioning.
+        - name: Checkout repository
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 0
+            ref: main
 
-      # Step 2: Get latest tag or create initial tag
-      # This step fetches the latest tag from the repository using the `gh` 
-      # CLI. If no tags are found, it creates and pushes the initial tag (1.0.0).
-      - name: Get latest tag or create initial tag
-        id: get_or_create_tag
-        run: |
-          # Fetching the latest tag from the repository
-          latest_tag=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' || echo "")
-          
-          # Check if no tags were found
-          if [[ -z "$latest_tag" ]]; then
-            # If no tags are found, set the initial version to 1.0.0
-            latest_tag="1.0.0"
-            # Set the initial version flag in the environment
-            echo "initial_version=true" >> $GITHUB_ENV
+        # Step 2: Get latest tag or create initial tag
+        # This step fetches the latest tag from the repository using the `gh` 
+        # CLI. If no tags are found, it creates and pushes the initial tag (1.0.0).
+        - name: Get latest tag or create initial tag
+          id: get_or_create_tag
+          run: |
+            # Fetching the latest tag from the repository
+            latest_tag=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' || echo "")
             
-            # Create and push the initial tag
-            git tag 1.0.0
-            git push origin 1.0.0
-            echo "Initial tag created."
-          else
-            # If tags were found, set the initial version flag to false
-            echo "Initial version flag not set."
-            echo "initial_version=false" >> $GITHUB_ENV
-          fi
-          
-          # Log the latest tag found
-          echo "Latest tag is: $latest_tag"
-          # Set the latest tag in the environment
-          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            # Check if no tags were found
+            if [[ -z "$latest_tag" ]]; then
+              # If no tags are found, set the initial version to 1.0.0
+              latest_tag="1.0.0"
+              # Set the initial version flag in the environment
+              echo "initial_version=true" >> $GITHUB_ENV
+              
+              # Create and push the initial tag
+              git tag 1.0.0
+              git push origin 1.0.0
+              echo "Initial tag created."
+            else
+              # If tags were found, set the initial version flag to false
+              echo "Initial version flag not set."
+              echo "initial_version=false" >> $GITHUB_ENV
+            fi
+            
+            # Log the latest tag found
+            echo "Latest tag is: $latest_tag"
+            # Set the latest tag in the environment
+            echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Determine branch type and select configuration file
-      # This step extracts the branch name from the commit message, determines 
-      # the branch type (release or hotfix), and selects the appropriate Release 
-      # Drafter configuration file.
-      - name: Determine branch type and config
-        id: get_branch_info
-        run: |
-          # Extract the branch name from the commit message
-          branch_name=$(jq -r .head_commit.message < "$GITHUB_EVENT_PATH" | grep -oP 'Merge pull request #[0-9]+ from \K\S+')
-          # Clean the branch name to get only the part after the last '/'
-          branch_name=$(echo "$branch_name" | sed 's/^[^/]*\///')
-          
-          # Log the extracted branch name
-          echo "Branch name extracted: $branch_name"
-          
-          # Determine branch type and select configuration file
-          if [[ "$branch_name" == release/* ]]; then
-            branch_type="release"
-            config_file="release-drafter-minor.yml"
-          elif [[ "$branch_name" == hotfix/* ]]; then
-            branch_type="hotfix"
-            config_file="release-drafter-patch.yml"
-          else
-            # Exit with an error if the branch does not match expected patterns
-            echo "Branch does not match expected patterns"
-            exit 1
-          fi
-          
-          # Log the determined branch type
-          echo "Branch type determined: $branch_type"
-          # Set the branch type and configuration file in the environment
-          echo "branch_type=$branch_type" >> $GITHUB_ENV
-          echo "config_file=$config_file" >> $GITHUB_ENV
+        # Step 3: Determine branch type and select configuration file
+        # This step extracts the branch name from the commit message, determines 
+        # the branch type (release or hotfix), and selects the appropriate Release 
+        # Drafter configuration file.
+        - name: Determine branch type and config
+          id: get_branch_info
+          run: |
+            # Extract the branch name from the commit message
+            branch_name=$(jq -r .head_commit.message < "$GITHUB_EVENT_PATH" | grep -oP 'Merge pull request #[0-9]+ from \K\S+')
+            # Clean the branch name to get only the part after the last '/'
+            branch_name=$(echo "$branch_name" | sed 's/^[^/]*\///')
+            
+            # Log the extracted branch name
+            echo "Branch name extracted: $branch_name"
+            
+            # Determine branch type and select configuration file
+            if [[ "$branch_name" == release/* ]]; then
+              branch_type="release"
+              config_file="release-drafter-minor.yml"
+            elif [[ "$branch_name" == hotfix/* ]]; then
+              branch_type="hotfix"
+              config_file="release-drafter-patch.yml"
+            else
+              # Exit with an error if the branch does not match expected patterns
+              echo "Branch does not match expected patterns"
+              exit 1
+            fi
+            
+            # Log the determined branch type
+            echo "Branch type determined: $branch_type"
+            # Set the branch type and configuration file in the environment
+            echo "branch_type=$branch_type" >> $GITHUB_ENV
+            echo "config_file=$config_file" >> $GITHUB_ENV
 
-      # Step 4: Increment version based on branch type
-      # This step increments the version based on the branch type. For a release 
-      # branch, it increments the minor version and resets the patch to 0.
-      # For a hotfix branch, it increments the patch version.
-      - name: Increment version
-        id: increment_version
-        if: env.latest_tag != '' && env.initial_version == 'false'
-        run: |
-          # Split the latest tag into major, minor, and patch versions
-          IFS='.' read -r major minor patch <<< "${{ env.latest_tag }}"
-          
-          # Check if the latest tag is in the expected format
-          if [[ -z "$major" || -z "$minor" || -z "$patch" ]]; then
-            echo "Error: latest_tag is not in the expected format."
-            exit 1
-          fi
-          
-          # Log the current version
-          echo "Current version: $major.$minor.$patch"
-          
-          # Increment version based on branch type
-          if [[ "${{ env.branch_type }}" == "release" ]]; then
-            minor=$((minor + 1))
-            patch=0
-          elif [[ "${{ env.branch_type }}" == "hotfix" ]]; then
-            patch=$((patch + 1))
-          else
-            echo "Unknown branch type"
-            exit 1
-          fi
-          
-          # Construct the new tag
-          new_tag="$major.$minor.$patch"
-          # Log the new tag calculated
-          echo "New tag calculated: $new_tag"
-          # Set the new tag in the environment
-          echo "new_tag=$new_tag" >> $GITHUB_ENV
-        env:
-          latest_tag: ${{ env.latest_tag }}
-          branch_type: ${{ env.branch_type }}
+        # Step 4: Increment version based on branch type
+        # This step increments the version based on the branch type. For a release 
+        # branch, it increments the minor version and resets the patch to 0.
+        # For a hotfix branch, it increments the patch version.
+        - name: Increment version
+          id: increment_version
+          if: env.latest_tag != '' && env.initial_version == 'false'
+          run: |
+            # Split the latest tag into major, minor, and patch versions
+            IFS='.' read -r major minor patch <<< "${{ env.latest_tag }}"
+            
+            # Check if the latest tag is in the expected format
+            if [[ -z "$major" || -z "$minor" || -z "$patch" ]]; then
+              echo "Error: latest_tag is not in the expected format."
+              exit 1
+            fi
+            
+            # Log the current version
+            echo "Current version: $major.$minor.$patch"
+            
+            # Increment version based on branch type
+            if [[ "${{ env.branch_type }}" == "release" ]]; then
+              minor=$((minor + 1))
+              patch=0
+            elif [[ "${{ env.branch_type }}" == "hotfix" ]]; then
+              patch=$((patch + 1))
+            else
+              echo "Unknown branch type"
+              exit 1
+            fi
+            
+            # Construct the new tag
+            new_tag="$major.$minor.$patch"
+            # Log the new tag calculated
+            echo "New tag calculated: $new_tag"
+            # Set the new tag in the environment
+            echo "new_tag=$new_tag" >> $GITHUB_ENV
+          env:
+            latest_tag: ${{ env.latest_tag }}
+            branch_type: ${{ env.branch_type }}
 
-      # Step 5: Draft release notes
-      # This step uses Release Drafter to draft release notes based on the branch 
-      # type and the selected configuration file.
-      - name: Draft Release Notes
-        uses: release-drafter/release-drafter@v5
-        with:
-          config-name: ${{ env.config_file }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Step 5: Draft release notes
+        # This step uses Release Drafter to draft release notes based on the branch 
+        # type and the selected configuration file.
+        - name: Draft Release Notes
+          uses: release-drafter/release-drafter@v5
+          with:
+            config-name: ${{ env.config_file }}
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 6: Publish the release
-      # This step publishes the release by updating the existing draft with the 
-      # new tag name and marking it as published.
-      - name: Publish Release
-        id: publish_release
-        run: |
-          # Log the release being published
-          echo "Publishing new release ${{ env.new_tag }}..."
-          # Edit the draft release to set the new tag and mark it as published
-          gh release edit _DRAFT_ --tag ${{ env.new_tag }} --title "Release v${{ env.new_tag }}" --draft=false 
-          # Log the successful release publication
-          echo "Release published: ${{ env.new_tag }}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          new_tag: ${{ env.new_tag }}
-                
-      # Step 7: Create Pull Request for rebasing develop with main after hotfix
-      - name: Force-create Rebase PR for hotfix
-        if: env.branch_type == 'hotfix'
-        run: |
-          # Ensure local main is up-to-date with origin/main
-          git checkout main
+        # Step 6: Publish the release
+        # This step publishes the release by updating the existing draft with the 
+        # new tag name and marking it as published.
+        - name: Publish Release
+          id: publish_release
+          run: |
+            # Log the release being published
+            echo "Publishing new release ${{ env.new_tag }}..."
+            # Edit the draft release to set the new tag and mark it as published
+            gh release edit _DRAFT_ --tag ${{ env.new_tag }} --title "Release v${{ env.new_tag }}" --draft=false 
+            # Log the successful release publication
+            echo "Release published: ${{ env.new_tag }}"
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            new_tag: ${{ env.new_tag }}
+                  
 
-          git pull origin main
-
-          # Fetch the latest commits from origin/main
-          git fetch origin main --prune --no-tags --depth=1  # Use depth=1 or remove depth entirely
-
-          # Reset main to match origin/main
-          git reset --hard origin/main
-
-          # Create a new branch off the updated main
-          git checkout -b rebase/${{ env.new_tag }}
-
-          # Push the new branch to the remote
-          git push origin rebase/${{ env.new_tag }} --force
-
-      - name: Create Pull Request
-        if: env.branch_type == 'hotfix'
-        uses: peter-evans/create-pull-request@v5
-        with:
-          commit-message: "Rebase develop with changes from main"
-          branch: "rebase/${{ env.new_tag }}"  # Reference the newly pushed branch
-          base: "develop"
-          title: "Rebase develop with main for hotfix"
-          body: |
-            This PR rebases the `develop` branch with the latest changes from `main`.
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - name: Create Pull Request
+          if: env.branch_type == 'hotfix'
+          uses: peter-evans/create-pull-request@v5
+          with:
+            commit-message: "Rebase develop with changes from main"
+            branch: "rebase/${{ env.new_tag }}"  # Reference the newly pushed branch
+            base: "develop"
+            title: "Rebase develop with main for hotfix"
+            body: |
+              This PR rebases the `develop` branch with the latest changes from `main`.
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
