@@ -160,65 +160,65 @@ jobs:
 
       # Step 10: Send a Slack notification with GitHub and Confluence links
       # Sends a Slack message with buttons linking to the GitHub release and Confluence page.
-      - name: Send Slack notification
-        uses: slackapi/slack-github-action@v1.25.0
-        with:
-          channel-id: ${{ env.slackChannel }}
-          payload: |
-            {
-              "text": "Release notes for version ${{ env.latest_tag }} have been published to Confluence. :rocket:",
-              "blocks": [
-                {
-                  "type": "header",
-                  "text": {
-                    "type": "plain_text",
-                    "text": ":rocket: Release v${{ env.latest_tag }}"
-                  }
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "text": "*${{ env.DATE }}*  |  ${{ env.projectName }}",
-                      "type": "mrkdwn"
-                    }
-                  ]
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "${{ env.formattedReleaseNotes }}"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "actions",
-                  "elements": [
-                    {
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
-                        "emoji": true,
-                        "text": "View GitHub Release"
-                      },
-                      "url": "https://github.com/${{ github.repository }}/releases/tag/${{ env.latest_tag }}"
-                    },
-                    {
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
-                        "emoji": true,
-                        "text": "View Confluence Page"
-                      },
-                      "url": "${{ env.confluencePageUrl }}"
-                    }
-                  ]
-                }
-              ]
-            }
+      # - name: Send Slack notification
+      #   uses: slackapi/slack-github-action@v1.25.0
+      #   with:
+      #     channel-id: ${{ env.slackChannel }}
+      #     payload: |
+      #       {
+      #         "text": "Release notes for version ${{ env.latest_tag }} have been published to Confluence. :rocket:",
+      #         "blocks": [
+      #           {
+      #             "type": "header",
+      #             "text": {
+      #               "type": "plain_text",
+      #               "text": ":rocket: Release v${{ env.latest_tag }}"
+      #             }
+      #           },
+      #           {
+      #             "type": "context",
+      #             "elements": [
+      #               {
+      #                 "text": "*${{ env.DATE }}*  |  ${{ env.projectName }}",
+      #                 "type": "mrkdwn"
+      #               }
+      #             ]
+      #           },
+      #           {
+      #             "type": "divider"
+      #           },
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "${{ env.formattedReleaseNotes }}"
+      #             }
+      #           },
+      #           {
+      #             "type": "divider"
+      #           },
+      #           {
+      #             "type": "actions",
+      #             "elements": [
+      #               {
+      #                 "type": "button",
+      #                 "text": {
+      #                   "type": "plain_text",
+      #                   "emoji": true,
+      #                   "text": "View GitHub Release"
+      #                 },
+      #                 "url": "https://github.com/${{ github.repository }}/releases/tag/${{ env.latest_tag }}"
+      #               },
+      #               {
+      #                 "type": "button",
+      #                 "text": {
+      #                   "type": "plain_text",
+      #                   "emoji": true,
+      #                   "text": "View Confluence Page"
+      #                 },
+      #                 "url": "${{ env.confluencePageUrl }}"
+      #               }
+      #             ]
+      #           }
+      #         ]
+      #       }
