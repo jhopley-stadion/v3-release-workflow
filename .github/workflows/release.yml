@@ -176,20 +176,17 @@ jobs:
           git fetch 
           git checkout main
           git pull origin main
-          git reset --hard origin/main
+          git reset --hard origin main
           git checkout -b rebase/${{ env.new_tag }}
           git push origin rebase/${{ env.new_tag }} --force
 
-      # - name: Create Pull Request
-      #   if: env.branch_type == 'hotfix'
-      #   uses: peter-evans/create-pull-request@v5
-      #   with:
-      #     commit-message: "Rebase develop with changes from main"
-      #     branch: "rebase/${{ env.new_tag }}" 
-      #     base: "develop"
-      #     title: "Rebase develop with main for hotfix"
-      #     body: |
-      #       This PR rebases the `develop` branch with the latest changes from `main`.
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
- 
+      - name: Create Pull Request with GitHub CLI
+        if: env.branch_type == 'hotfix'
+        run: |
+          gh pr create \
+            --base develop \
+            --head rebase/${{ env.new_tag }} \
+            --title "Hotfix from main into develop" \
+            --body "This PR includes hotfix changes from main."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
