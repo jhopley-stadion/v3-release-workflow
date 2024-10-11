@@ -176,6 +176,8 @@ jobs:
           # Ensure local main is up-to-date with origin/main
           git checkout main
 
+          git pull origin main
+
           # Fetch the latest commits from origin/main
           git fetch origin main --prune --no-tags --depth=1  # Use depth=1 or remove depth entirely
 
