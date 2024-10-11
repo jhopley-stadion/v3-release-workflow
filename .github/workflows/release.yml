@@ -184,7 +184,6 @@ jobs:
             --head rebase/${{ env.new_tag }} \
             --title "Hotfix from main into develop" \
             --body "This PR includes hotfix changes from main."
-            --merge-method rebase
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
