@@ -176,10 +176,11 @@ jobs:
           git checkout main
           git fetch origin
           git checkout -b rebase/${{ env.new_tag }}
-          git pull
-          git merge origin main
+          git merge origin/main
+          # Set the upstream to track the remote branch
+          git branch --set-upstream-to=origin/main rebase/${{ env.new_tag }}
           git push origin rebase/${{ env.new_tag }}
-          
+
       - name: Create Pull Request
         if: env.branch_type == 'hotfix'
         uses: peter-evans/create-pull-request@v5
