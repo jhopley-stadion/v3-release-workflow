@@ -173,12 +173,11 @@ jobs:
       - name: Force-create Rebase PR for hotfix
         if: env.branch_type == 'hotfix'
         run: |
-          git fetch 
+          git fetch origin
           git checkout main
-          git pull origin main
-          git reset --hard origin main
-          git checkout -b rebase/${{ env.new_tag }}
-          git push origin rebase/${{ env.new_tag }} --force
+          git pull origin main  # Ensure you have the latest changes
+          git checkout -b rebase/${{ env.new_tag }}  # Create a new branch from main
+          git push origin rebase/${{ env.new_tag }} --force  # Push the new branch
 
       - name: Create Pull Request with GitHub CLI
         if: env.branch_type == 'hotfix'
