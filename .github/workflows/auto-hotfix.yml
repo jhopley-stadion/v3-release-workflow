@@ -1,0 +1,26 @@
+name: Auto Create PR to Develop on Hotfix to Main
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'hotfix/')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create PR from hotfix branch to develop
+        run: |
+          gh pr create \
+            --base develop \
+            --head ${{ github.head_ref }} \
+            --title "Hotfix: Merge ${{ github.head_ref }} into develop" \
+            --body "This PR applies the hotfix changes from ${{ github.head_ref }} to develop."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
