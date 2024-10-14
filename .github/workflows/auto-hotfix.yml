@@ -1,4 +1,5 @@
 name: Automate hotfix Pr's on PR to main.
+
 on:
   pull_request:
     branches:
