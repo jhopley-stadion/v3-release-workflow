@@ -4,8 +4,7 @@ on:
   pull_request:
     branches:
       - main
-    types:
-      - opened
+    types: [opened, synchronize]
 
 jobs:
   create-pr:
@@ -22,8 +21,8 @@ jobs:
             --head ${{ github.head_ref }} \
             --title "Hotfix: Merge ${{ github.head_ref }} into develop" \
             --body "This PR applies the hotfix changes from ${{ github.head_ref }} to develop."
-            --label "automated" 
-            --label "hotfix" 
+            --label "automated" \
+            --label "hotfix"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
