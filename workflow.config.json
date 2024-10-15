@@ -1,5 +1,6 @@
 {
   "projectName": "Stadion V3 Test Project ",
+  "autoHotfixPrs": true,
   "branchSystem": {
     "main": {
       "accepts": [

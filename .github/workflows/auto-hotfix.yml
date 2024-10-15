@@ -1,4 +1,10 @@
-name: Automate hotfix Pr's on PR to main.
+# GitHub Actions Workflow for Automating Hotfix Pull Requests
+# This workflow triggers on pull requests made to the 'main' branch.
+# It checks if the pull request originates from a hotfix branch and 
+# whether automatic hotfix PRs are enabled in 'workflow.config.json'.
+# If both conditions are met, it creates a PR from the hotfix branch to the develop branch.
+
+name: Automate hotfix PRs on PR to main.
 
 on:
   pull_request:
@@ -8,12 +14,27 @@ on:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
-    if: startsWith(github.head_ref, 'hotfix/')
+    if: startsWith(github.head_ref, 'hotfix/')  # Only run if the source branch is a hotfix branch
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Create PR from hotfix branch to develop
+      
+      # Step 2: Load configuration from a JSON file
+      - name: Check if autoHotfixPrs is enabled
+        id: check_auto_hotfix
         run: |
+          # Extract the value of 'autoHotfixPrs' from workflow.config.json
+          AUTO_HOTFIX=$(jq -r '.autoHotfixPrs' workflow.config.json)
+          # Set the extracted value as an environment variable for use in subsequent steps
+          echo "AUTO_HOTFIX=${AUTO_HOTFIX}" >> $GITHUB_ENV
+
+      # Step 3: Create a pull request from the hotfix branch to the develop branch
+      - name: Create PR from hotfix branch to develop
+        # Only run this step if autoHotfixPrs is true
+        if: env.AUTO_HOTFIX == 'true'  
+        run: |
+          # Create a pull request from the hotfix branch to the develop branch
           gh pr create \
             --base develop \
             --head ${{ github.head_ref }} \
@@ -21,4 +42,3 @@ jobs:
             --body "This PR applies the hotfix changes from ${{ github.head_ref }} to develop." \
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

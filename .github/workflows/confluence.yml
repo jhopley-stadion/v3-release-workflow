@@ -33,7 +33,6 @@ jobs:
 
     steps:
       # Step 1: Checkout the repository
-      # This step checks out the repository so that the workflow has access to all the files, including the configuration and scripts.
       - name: Checkout
         uses: actions/checkout@v3
 
