@@ -33,11 +33,48 @@ jobs:
 
     steps:
       # Step 1: Checkout the repository
-      # This step checks out the repository so that the workflow has access to all the files, including the configuration and scripts.
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Step 2: Fetch the latest release tag and release notes
+
+      # Step 2: Load configuration from a JSON file
+      # Loads configuration values from a JSON file (such as project name, Confluence settings, etc.)
+      # and exports them as environment variables for the subsequent steps.
+      - name: Load config from JSON
+        id: load_config
+        run: |
+          # Check if the config file exists
+          if [ ! -f workflow.config.json ]; then
+            echo "Config file not found. Skipping workflow steps."
+            exit 0
+          fi
+
+          # Extract and export values from config
+          projectName=$(jq -r '.projectName' workflow.config.json)
+          confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
+          confluenceSpaceName=$(jq -r '.confluenceSettings.spaceName' workflow.config.json)
+          confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
+          atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' workflow.config.json)
+          folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
+          jiraBaseUrl=$(jq -r '.jiraSettings.jiraBaseUrl' workflow.config.json)
+          jiraProjectKey=$(jq -r '.jiraSettings.jiraProjectKey' workflow.config.json)
+          slackChannel=$(jq -r '.slackSettings.channel' workflow.config.json)
+
+          # Export values for use in future steps
+          echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
+          echo "projectName=$projectName" >> $GITHUB_ENV
+          echo "confluenceSpaceName=$confluenceSpaceName" >> $GITHUB_ENV
+          echo "confluenceParentId=$confluenceParentId" >> $GITHUB_ENV
+          echo "atlassianUserName=$atlassianUserName" >> $GITHUB_ENV
+          echo "folderToPublish=$folderToPublish" >> $GITHUB_ENV
+          echo "jiraBaseUrl=$jiraBaseUrl" >> $GITHUB_ENV
+          echo "jiraProjectKey=$jiraProjectKey" >> $GITHUB_ENV
+          echo "slackChannel=$slackChannel" >> $GITHUB_ENV
+
+          # Store the current date 
+          echo "DATE=$(date +"%B %d, %Y")" >> $GITHUB_ENV
+
+      # Step 3: Fetch the latest release tag and release notes
       # This step fetches the most recent GitHub release, extracts the release notes, 
       # and saves them both to a local file and as environment variables.
       - name: Fetch the latest tag
@@ -62,40 +99,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Load configuration from a JSON file
-      # Loads configuration values from a JSON file (such as project name, Confluence settings, etc.)
-      # and exports them as environment variables for the subsequent steps.
-      - name: Load config from JSON
-        id: load_config
-        run: |
-          projectName=$(jq -r '.projectName' workflow.config.json)
-          confluenceBaseUrl=$(jq -r '.confluenceSettings.confluenceBaseUrl' workflow.config.json)
-          confluenceSpaceName=$(jq -r '.confluenceSettings.spaceName' workflow.config.json)
-          confluenceParentId=$(jq -r '.confluenceSettings.confluenceParentId' workflow.config.json)
-          atlassianUserName=$(jq -r '.confluenceSettings.atlassianUserName' workflow.config.json)
-          folderToPublish=$(jq -r '.confluenceSettings.folderToPublish' workflow.config.json)
-          jiraBaseUrl=$(jq -r '.jiraSettings.jiraBaseUrl' workflow.config.json)
-          jiraProjectKey=$(jq -r '.jiraSettings.jiraProjectKey' workflow.config.json)
-          slackChannel=$(jq -r '.slackSettings.channel' workflow.config.json)
 
-          # Export values for use in future steps
-          echo "confluenceBaseUrl=$confluenceBaseUrl" >> $GITHUB_ENV
-          echo "projectName=$projectName" >> $GITHUB_ENV
-          echo "confluenceSpaceName=$confluenceSpaceName" >> $GITHUB_ENV
-          echo "confluenceParentId=$confluenceParentId" >> $GITHUB_ENV
-          echo "atlassianUserName=$atlassianUserName" >> $GITHUB_ENV
-          echo "folderToPublish=$folderToPublish" >> $GITHUB_ENV
-          echo "jiraBaseUrl=$jiraBaseUrl" >> $GITHUB_ENV
-          echo "jiraProjectKey=$jiraProjectKey" >> $GITHUB_ENV
-          echo "slackChannel=$slackChannel" >> $GITHUB_ENV
-
-          # Store the current date in a human-readable format
-          echo "DATE=$(date +"%B %d, %Y")" >> $GITHUB_ENV
 
       # Step 4: Publish the Markdown release notes to Confluence
       # Publishes the release notes stored in the 'docs' folder to the specified Confluence space.
       - name: Publish Markdown to Confluence
         id: publish_confluence
+        # Check if Confluence settings are provided before running the step
+        if: ${{ env.confluenceBaseUrl && env.confluenceParentId && env.atlassianUserName }} 
         uses: markdown-confluence/publish-action@v5
         with:
           confluenceBaseUrl: ${{ env.confluenceBaseUrl }}
@@ -108,6 +119,8 @@ jobs:
       # Retrieves the Confluence page ID by querying the API using the page title (based on the release tag).
       - name: Get Confluence page ID
         id: get_page_id
+        # Check if Confluence settings are provided before running the step
+        if: ${{ env.confluenceBaseUrl && env.confluenceParentId && env.atlassianUserName }} 
         run: |
           pageTitle="Release v${{ env.latest_tag }}"
           encodedPageTitle="${pageTitle// /+}"
@@ -132,20 +145,23 @@ jobs:
       # Simply echoes the constructed Confluence URL to the workflow logs.
       - name: Construct Confluence URL
         id: construct_url
+        # Check if Confluence settings are provided before running the step
+        if: ${{ env.confluenceBaseUrl && env.confluencePageUrl }} # Only if Confluence settings are set
         run: |
           echo "Constructed Confluence Page URL: ${{ env.confluencePageUrl }}"
 
-      # Step 7: Set up Node.js to format release notes for Slack
+      # Step 7/8: Set up Node.js to format release notes for Slack
       # Installs Node.js and the necessary dependencies for converting Markdown to Slack-compatible format.
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: '20'
-
+      
+      
       - name: Install Dependencies
         run: npm install slackify-markdown
 
-      # Step 8: Format the release notes for Slack
+      # Step 9: Format the release notes for Slack
       # Converts the release notes to Slack-compatible formatting using the 'slackify-markdown' tool.
       - name: Format Release Notes
         env:
@@ -153,15 +169,18 @@ jobs:
         run: |
           node workflow-scripts/slackify-release.workflow.mjs > formattedReleaseNotes.txt
 
-      # Step 9: Save the formatted release notes to the environment
+      # Step 10: Save the formatted release notes to the environment
       # Stores the formatted release notes in an environment variable for use in the Slack notification.
       - name: Save formatted release notes to GITHUB_ENV
         run: echo "formattedReleaseNotes=$(cat formattedReleaseNotes.txt)" >> $GITHUB_ENV
 
-      # Step 10: Send a Slack notification with GitHub and Confluence links
+      # Step 11: Send a Slack notification with GitHub and Confluence links
       # Sends a Slack message with buttons linking to the GitHub release and Confluence page.
       - name: Send Slack notification
         uses: slackapi/slack-github-action@v1.25.0
+        #  Check if the Slack channel is defined before running the step
+        if: ${{ env.slackChannel }} # Only if the Slack channel is defined
+
         with:
           channel-id: ${{ env.slackChannel }}
           payload: |
