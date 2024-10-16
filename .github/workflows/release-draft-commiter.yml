@@ -5,7 +5,6 @@ on:
     types: [opened, synchronize, reopened]
     branches:
       - main
-
 permissions:
   contents: write # Allows pushing commits
   pull-requests: write # Allows posting comments on the PR
